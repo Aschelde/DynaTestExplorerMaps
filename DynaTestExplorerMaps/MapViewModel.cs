@@ -110,6 +110,24 @@ namespace DynaTestExplorerMaps
                 var pointGraphic = new Graphic(new MapPoint(point.Longitude, point.Latitude, SpatialReferences.Wgs84), pointSymbol);
                 malibuGraphicsOverlay.Graphics.Add(pointGraphic);
             }
+
+            // Create a polyline builder from the list of points.
+            var polylineBuilder = new PolylineBuilder(SpatialReferences.Wgs84);
+            foreach (GpsPoint point in points)
+            {
+                polylineBuilder.AddPoint(new MapPoint(point.Longitude, point.Latitude, SpatialReferences.Wgs84));
+            }
+
+            var lineSymbol = new SimpleLineSymbol
+            {
+                Style = SimpleLineSymbolStyle.Solid,
+                Color = System.Drawing.Color.Red,
+                Width = 2.0
+            };
+
+            // Create a graphic from the polyline builder.
+            var lineGraphic = new Graphic(polylineBuilder.ToGeometry(), lineSymbol);
+            malibuGraphicsOverlay.Graphics.Add(lineGraphic);
         }
     }
 }

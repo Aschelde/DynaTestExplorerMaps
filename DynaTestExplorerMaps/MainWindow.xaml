@@ -11,6 +11,8 @@
         <local:MapViewModel x:Key="MapViewModel" />
     </Window.Resources>
     <Grid>
-        <esri:MapView Map="{Binding Map, Source={StaticResource MapViewModel}}" />
+        <esri:MapView x:Name="MainMapView"
+                          Map="{Binding Map, Source={StaticResource MapViewModel}}"
+                          GraphicsOverlays="{Binding GraphicsOverlays, Source={StaticResource MapViewModel}}" />
     </Grid>
 </Window>

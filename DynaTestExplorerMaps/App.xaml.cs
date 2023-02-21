@@ -38,8 +38,8 @@ namespace DynaTestExplorerMaps
             {
                 // Initialize the ArcGIS Maps SDK runtime before any components are created.
                 ArcGISRuntimeEnvironment.Initialize(config => config
-                // .UseLicense("[Your ArcGIS Maps SDK License key]")
-                // .UseApiKey("[Your ArcGIS location services API Key]")
+                .UseLicense("runtimelite,1000,rud8290624519,none,E9PJD4SZ8LP7LMZ59172")
+                .UseApiKey("AAPK05941c697899421c86df55261f04684cghLH1EjsYnL5YSkn2AukEOaRqixQryZAp9v5Av3VDPRtHHlQttyG_le3zufHiP9M")
                   .ConfigureAuthentication(auth => auth
                      .UseDefaultChallengeHandler() // Use the default authentication dialog
                   // .UseOAuthAuthorizeHandler(myOauthAuthorizationHandler) // Configure a custom OAuth dialog

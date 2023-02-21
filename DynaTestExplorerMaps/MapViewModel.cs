@@ -1,3 +1,4 @@
+using DynaTestExplorerMaps.model;
 using Esri.ArcGISRuntime.Data;
 using Esri.ArcGISRuntime.Geometry;
 using Esri.ArcGISRuntime.Location;
@@ -13,6 +14,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Xps.Serialization;
 
 namespace DynaTestExplorerMaps
 {
@@ -79,7 +81,12 @@ namespace DynaTestExplorerMaps
             this.GraphicsOverlays = overlays;
 
             // Create a point geometry.
+
             var pilAgerVej0 = new MapPoint(11.32630045, 55.41475820, SpatialReferences.Wgs84);
+
+            GPSPointLoader loader = new GPSPointLoader();
+            loader.setPath("C:\\Users\\Asger\\Bachelor\\3336518-0_Pilagervej - IRI Milestones\\3336518-0_Pilagervej - IRI Milestones\\3336518-0_Pilagervej.GPX");
+            List<GpsPoint> points = loader.getGpsPoints();
 
             // Create a symbol to define how the point is displayed.
             var pointSymbol = new SimpleMarkerSymbol
@@ -97,13 +104,12 @@ namespace DynaTestExplorerMaps
                 Width = 2.0
             };
 
-            // Create a point graphic with the geometry and symbol.
-            var pointGraphic = new Graphic(pilAgerVej0, pointSymbol);
-
-            // Add the point graphic to graphics overlay.
-            malibuGraphicsOverlay.Graphics.Add(pointGraphic);
-
+            //create all Gps points as point graphic.
+            foreach (GpsPoint point in points)
+            {
+                var pointGraphic = new Graphic(new MapPoint(point.Longitude, point.Latitude, SpatialReferences.Wgs84), pointSymbol);
+                malibuGraphicsOverlay.Graphics.Add(pointGraphic);
+            }
         }
-
     }
 }

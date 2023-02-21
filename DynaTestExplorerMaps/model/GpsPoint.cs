@@ -6,7 +6,12 @@ using System.Threading.Tasks;
 
 namespace DynaTestExplorerMaps.model
 {
-    internal class GpsPoint
+    class GpsPoint
     {
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+        public double Elevation { get; set; }
+        public DateTime Time { get; set; }
+        public string? Name { get; set; }
     }
 }

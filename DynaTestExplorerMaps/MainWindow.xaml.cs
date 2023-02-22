@@ -26,6 +26,11 @@ namespace DynaTestExplorerMaps
         {
             InitializeComponent();
 
+            this.WindowStyle = WindowStyle.SingleBorderWindow;
+
+            // set the WindowState to Maximized to make the window full screen while keeping the title bar and window borders visible
+            this.WindowState = WindowState.Maximized;
+
             MapPoint mapCenterPoint = new MapPoint(11.32630045, 55.41475820, SpatialReferences.Wgs84);
             MainMapView.SetViewpoint(new Viewpoint(mapCenterPoint, 10000));
         }

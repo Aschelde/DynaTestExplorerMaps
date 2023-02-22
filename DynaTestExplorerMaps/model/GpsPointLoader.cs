@@ -83,5 +83,42 @@ namespace DynaTestExplorerMaps.model
                 throw new Exception("Error loading GPS points.", ex);
             }
         }
+
+        public Bounds getBounds()
+        {
+            if (string.IsNullOrEmpty(docPath))
+            {
+                throw new ArgumentException("Invalid document path.");
+            }
+
+            try
+            {
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.Load(docPath);
+                XmlNamespaceManager nsmgr = new XmlNamespaceManager(xmlDoc.NameTable);
+                nsmgr.AddNamespace("g", "http://www.topografix.com/GPX/1/0");
+
+                XmlNode? boundsNode = xmlDoc.SelectSingleNode("//g:bounds", nsmgr);
+                if (boundsNode == null)
+                {
+                    throw new Exception("No bounds found in XML document.");
+                }
+
+                double minLat = double.Parse(boundsNode.Attributes?["minLat"]?.Value ??
+                throw new InvalidOperationException("Minimum latitude attribute not found."), CultureInfo.InvariantCulture);
+                double minLon = double.Parse(boundsNode.Attributes["lon"]?.Value ??
+                throw new InvalidOperationException("minimum longitude attribute not found."), CultureInfo.InvariantCulture);
+                double maxLat = double.Parse(boundsNode.Attributes?["maxLat"]?.Value ??
+                throw new InvalidOperationException("Maximum latitude attribute not found."), CultureInfo.InvariantCulture);
+                double maxLon = double.Parse(boundsNode.Attributes?["maxLon"]?.Value ??
+                throw new InvalidOperationException("Maximum longitude attribute not found."), CultureInfo.InvariantCulture);
+
+                return new Bounds(minLat, minLon, maxLat, maxLon);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error loading bounds.", ex);
+            }
+        }
     }
 }

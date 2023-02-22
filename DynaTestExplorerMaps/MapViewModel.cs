@@ -93,7 +93,7 @@ namespace DynaTestExplorerMaps
             {
                 Style = SimpleMarkerSymbolStyle.Circle,
                 Color = System.Drawing.Color.Orange,
-                Size = 10.0
+                Size = 5.0
             };
 
             // Add an outline to the symbol.
@@ -101,7 +101,7 @@ namespace DynaTestExplorerMaps
             {
                 Style = SimpleLineSymbolStyle.Solid,
                 Color = System.Drawing.Color.Blue,
-                Width = 2.0
+                Width = 1.0
             };
 
             //create all Gps points as point graphic.

@@ -63,7 +63,7 @@ namespace DynaTestExplorerMaps.model
                         throw new InvalidOperationException("Elevation node not found."), CultureInfo.InvariantCulture),
                         Time = DateTime.Parse(node.SelectSingleNode("g:time", nsmgr)?.InnerText ?? 
                         throw new InvalidOperationException("Time node not found.")),
-                        Name = node.SelectSingleNode("g:name", nsmgr)?.InnerText ?? "",
+                        Name = ConvertToIdFormat(node.SelectSingleNode("g:name", nsmgr)?.InnerText ?? ""),
                     };
                     points.Add(point);
                 }
@@ -119,6 +119,15 @@ namespace DynaTestExplorerMaps.model
             {
                 throw new Exception("Error loading bounds.", ex);
             }
+        }
+
+        private static string ConvertToIdFormat(string input)
+        {
+            // Remove the decimal point and convert the string to an integer
+            int num = int.Parse(input.Substring(0, input.Length - 4).Replace(".", ""));
+
+            // Convert the integer to a string with leading zeroes and return it
+            return num.ToString("D6");
         }
     }
 }

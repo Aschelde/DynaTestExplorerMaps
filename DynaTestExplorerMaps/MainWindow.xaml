@@ -7,12 +7,40 @@
         xmlns:local="clr-namespace:DynaTestExplorerMaps"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Window.Resources>
-        <local:MapViewModel x:Key="MapViewModel" />
-    </Window.Resources>
     <Grid>
-        <esri:MapView x:Name="MainMapView"
-                          Map="{Binding Map, Source={StaticResource MapViewModel}}"
-                          GraphicsOverlays="{Binding GraphicsOverlays, Source={StaticResource MapViewModel}}" />
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width = "200"/>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="500"/>
+        </Grid.ColumnDefinitions>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="75"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <esri:MapView x:Name="MainMapView"
+                    Map="{Binding Map}"
+                    GraphicsOverlays="{Binding GraphicsOverlays}" />
+        </Grid>
+
+        <Grid Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <ScrollViewer Name="scrollViewer">
+                <ItemsControl Name="imageControl" ScrollViewer.CanContentScroll="True">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel Orientation="Vertical"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Image Source="{Binding Image}" Stretch="Uniform" Margin="0"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
     </Grid>
+
 </Window>

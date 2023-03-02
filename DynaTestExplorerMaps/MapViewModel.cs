@@ -23,6 +23,9 @@ namespace DynaTestExplorerMaps
     /// </summary>
     class MapViewModel : INotifyPropertyChanged
     {
+        private Map _map;
+        private GraphicsOverlay _trackerGraphicsOverlay;
+        private List<GpsPoint> points;
 
         public MapViewModel()
         {
@@ -38,7 +41,6 @@ namespace DynaTestExplorerMaps
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        private Map _map;
         public Map Map
         {
             get { return _map; }
@@ -86,7 +88,7 @@ namespace DynaTestExplorerMaps
 
             GPSPointLoader loader = new GPSPointLoader();
             loader.setPath("C:\\Users\\Asger\\Bachelor\\3336518-0_Pilagervej - IRI Milestones\\3336518-0_Pilagervej - IRI Milestones\\3336518-0_Pilagervej.GPX");
-            List<GpsPoint> points = loader.getGpsPoints();
+            this.points = loader.getGpsPoints();
 
             // Create a symbol to define how the point is displayed.
             var pointSymbol = new SimpleMarkerSymbol
@@ -128,6 +130,47 @@ namespace DynaTestExplorerMaps
             // Create a graphic from the polyline builder.
             var lineGraphic = new Graphic(polylineBuilder.ToGeometry(), lineSymbol);
             malibuGraphicsOverlay.Graphics.Add(lineGraphic);
+        }
+
+        public void UpdateTracker(string Id)
+        {
+            GpsPoint? point = points.Find(GpsPoint => GpsPoint.Name == Id);
+            //TODO: check if point is null
+
+            if (_trackerGraphicsOverlay == null)
+            {
+                _trackerGraphicsOverlay = new GraphicsOverlay();
+            }
+
+            //if tracker does not already have a point graphic, create one
+            if (_trackerGraphicsOverlay.Graphics.Count == 0)
+            {
+                var pointSymbol = new SimpleMarkerSymbol
+                {
+                    Style = SimpleMarkerSymbolStyle.Circle,
+                    Color = System.Drawing.Color.Green,
+                    Size = 7.0
+                };
+
+                pointSymbol.Outline = new SimpleLineSymbol
+                {
+                    Style = SimpleLineSymbolStyle.Solid,
+                    Color = System.Drawing.Color.DarkGreen,
+                    Width = 1.0
+                };
+
+                var pointGraphic = new Graphic(new MapPoint(point.Longitude, point.Latitude, SpatialReferences.Wgs84), pointSymbol);
+                _trackerGraphicsOverlay.Graphics.Add(pointGraphic);
+                this.GraphicsOverlays.Add(_trackerGraphicsOverlay);
+
+            } else
+            {
+                // Retrieve the existing tracker graphic from the overlay.
+                var trackerGraphic = _trackerGraphicsOverlay.Graphics.First();
+
+                trackerGraphic.Geometry = new MapPoint(point.Longitude, point.Latitude, SpatialReferences.Wgs84);
+            }
+
         }
     }
 }

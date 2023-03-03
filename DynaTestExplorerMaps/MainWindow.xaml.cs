@@ -24,6 +24,8 @@ namespace DynaTestExplorerMaps
     /// </summary>
     public partial class MainWindow : Window
     {
+
+        private FrameworkElement lastElementInCenterView;
         public MainWindow()
         {
             InitializeComponent();
@@ -31,9 +33,10 @@ namespace DynaTestExplorerMaps
             MapViewModel mapViewModel = new MapViewModel();
             DataContext = mapViewModel;
 
+
             this.WindowStyle = WindowStyle.SingleBorderWindow;
 
-            // set the WindowState to Maximized to make the window full screen while keeping the title bar and window borders visible
+            // set the WindowState to Maximized to make the window full screen
             this.WindowState = WindowState.Maximized;
 
             MainMapView.Loaded += MainMapView_Loaded;
@@ -61,9 +64,16 @@ namespace DynaTestExplorerMaps
 
             foreach (var item in imageControl.Items)
             {
+                // Get the container for the image
                 var container = imageControl.ItemContainerGenerator.ContainerFromItem(item) as FrameworkElement;
-                if (container != null && IsUserVisible(container, scrollViewer))
+                if (container != null && IsElementInCenterView(container, scrollViewer))
                 {
+                    // Check if this is the same element as last time
+                    if (container == lastElementInCenterView)
+                    {
+                        return;
+                    }
+
                     // Get the ImageItem instance from the item
                     ImageItem imageItem = (ImageItem)item;
                     if (imageItem != null)
@@ -76,15 +86,19 @@ namespace DynaTestExplorerMaps
             }
         }
 
-        //https://stackoverflow.com/questions/1517743/in-wpf-how-can-i-determine-whether-a-control-is-visible-to-the-user
-        private bool IsUserVisible(FrameworkElement element, FrameworkElement container)
+        private bool IsElementInCenterView(FrameworkElement element, FrameworkElement container)
         {
             if (!element.IsVisible)
                 return false;
 
+            // Create Rect to represent the element's bounds in the container's coordinate space
             Rect bounds = element.TransformToAncestor(container).TransformBounds(new Rect(0.0, 0.0, element.ActualWidth, element.ActualHeight));
+
+            // calculate the center of the element's bounds
             double elementYCenter = bounds.Top + (bounds.Height / 2);
             double containerYCenter = container.ActualHeight / 2;
+
+            //check if the element is within the container's center
             double verticalOffset = containerYCenter - elementYCenter;
             return Math.Abs(verticalOffset) <= (container.ActualHeight / 2);
         }

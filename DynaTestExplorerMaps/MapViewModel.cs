@@ -149,14 +149,14 @@ namespace DynaTestExplorerMaps
                 {
                     Style = SimpleMarkerSymbolStyle.Circle,
                     Color = System.Drawing.Color.Green,
-                    Size = 7.0
+                    Size = 12.0
                 };
 
                 pointSymbol.Outline = new SimpleLineSymbol
                 {
                     Style = SimpleLineSymbolStyle.Solid,
                     Color = System.Drawing.Color.DarkGreen,
-                    Width = 1.0
+                    Width = 3.0
                 };
 
                 var pointGraphic = new Graphic(new MapPoint(point.Longitude, point.Latitude, SpatialReferences.Wgs84), pointSymbol);

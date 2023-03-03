@@ -14,6 +14,9 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows;
 using System.Windows.Xps.Serialization;
 
 namespace DynaTestExplorerMaps
@@ -26,6 +29,7 @@ namespace DynaTestExplorerMaps
         private Map _map;
         private GraphicsOverlay _trackerGraphicsOverlay;
         private List<GpsPoint> points;
+        public ICommand ScrollToPointCommand { get; private set; }
 
         public MapViewModel()
         {
@@ -33,6 +37,7 @@ namespace DynaTestExplorerMaps
 
             CreateGraphics();
 
+            ScrollToPointCommand = new DelegateCommand<MapPoint>(ScrollToPoint);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -163,7 +168,8 @@ namespace DynaTestExplorerMaps
                 _trackerGraphicsOverlay.Graphics.Add(pointGraphic);
                 this.GraphicsOverlays.Add(_trackerGraphicsOverlay);
 
-            } else
+            }
+            else
             {
                 // Retrieve the existing tracker graphic from the overlay.
                 var trackerGraphic = _trackerGraphicsOverlay.Graphics.First();
@@ -171,6 +177,20 @@ namespace DynaTestExplorerMaps
                 trackerGraphic.Geometry = new MapPoint(point.Longitude, point.Latitude, SpatialReferences.Wgs84);
             }
 
+        }
+
+        private void scrollToPoint(Point point)
+        {
+            var mainWindow = Application.Current.MainWindow;
+            var scrollViewer = Utils.FindVisualChild<ScrollViewer>(mainWindow);
+
+            if (scrollViewer != null)
+            {
+                var transform = mapView.TransformToVisual(scrollViewer);
+                var pointInScrollViewer = transform.Transform(point);
+                scrollViewer.ScrollToVerticalOffset(pointInScrollViewer.Y - scrollViewer.ActualHeight / 2);
+                scrollViewer.ScrollToHorizontalOffset(pointInScrollViewer.X - scrollViewer.ActualWidth / 2);
+            }
         }
     }
 }

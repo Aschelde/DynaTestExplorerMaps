@@ -16,12 +16,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Xps.Serialization;
 
-namespace DynaTestExplorerMaps
+namespace DynaTestExplorerMaps.ViewModels
 {
     /// <summary>
     /// Provides map data to an application
     /// </summary>
-    class MapViewModel : INotifyPropertyChanged
+    public class MapViewModel : INotifyPropertyChanged
     {
         private Map _map;
         private GraphicsOverlay _trackerGraphicsOverlay;
@@ -65,7 +65,7 @@ namespace DynaTestExplorerMaps
         private void SetupMap()
         {
             // Create a new map with a 'topographic vector' basemap.
-            this.Map = new Map(BasemapStyle.ArcGISStreets);
+            Map = new Map(BasemapStyle.ArcGISStreets);
         }
 
         private void CreateGraphics()
@@ -80,7 +80,7 @@ namespace DynaTestExplorerMaps
             };
 
             // Set the view model's "GraphicsOverlays" property (will be consumed by the map view).
-            this.GraphicsOverlays = overlays;
+            GraphicsOverlays = overlays;
 
             // Create a point geometry.
 
@@ -88,7 +88,7 @@ namespace DynaTestExplorerMaps
 
             GPSPointLoader loader = new GPSPointLoader();
             loader.setPath("C:\\Users\\Asger\\Bachelor\\3336518-0_Pilagervej - IRI Milestones\\3336518-0_Pilagervej - IRI Milestones\\3336518-0_Pilagervej.GPX");
-            this.points = loader.getGpsPoints();
+            points = loader.getGpsPoints();
 
             // Create a symbol to define how the point is displayed.
             var pointSymbol = new SimpleMarkerSymbol
@@ -161,9 +161,10 @@ namespace DynaTestExplorerMaps
 
                 var pointGraphic = new Graphic(new MapPoint(point.Longitude, point.Latitude, SpatialReferences.Wgs84), pointSymbol);
                 _trackerGraphicsOverlay.Graphics.Add(pointGraphic);
-                this.GraphicsOverlays.Add(_trackerGraphicsOverlay);
+                GraphicsOverlays.Add(_trackerGraphicsOverlay);
 
-            } else
+            }
+            else
             {
                 // Retrieve the existing tracker graphic from the overlay.
                 var trackerGraphic = _trackerGraphicsOverlay.Graphics.First();

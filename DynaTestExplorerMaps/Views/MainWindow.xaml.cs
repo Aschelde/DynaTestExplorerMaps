@@ -8,6 +8,11 @@ namespace DynaTestExplorerMaps.Views
         public MainWindow()
         {
             InitializeComponent();
+
+            this.WindowStyle = WindowStyle.SingleBorderWindow;
+
+            // set the WindowState to Maximized to make the window full screen
+            this.WindowState = WindowState.Maximized;
         }
     }
 }

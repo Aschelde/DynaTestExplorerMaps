@@ -1,6 +1,7 @@
 ﻿using DynaTestExplorerMaps.ViewModels;
 using Esri.ArcGISRuntime.Geometry;
 using Esri.ArcGISRuntime.Mapping;
+using Esri.ArcGISRuntime.UI.Controls;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,11 +22,12 @@ namespace DynaTestExplorerMaps.Views
     /// <summary>
     /// Interaction logic for MapView.xaml
     /// </summary>
-    public partial class MapView : UserControl
+    public partial class MapControl : UserControl
     {
-        public MapView()
+        public MapControl()
         {
             InitializeComponent();
+
             MapViewModel mapViewModel = new MapViewModel();
             DataContext = mapViewModel;
 

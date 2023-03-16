@@ -15,12 +15,9 @@ using System.Windows.Shapes;
 
 namespace DynaTestExplorerMaps.Views
 {
-    /// <summary>
-    /// Interaction logic for ImageView.xaml
-    /// </summary>
-    public partial class ImageView : UserControl
+    public partial class ImageControl : UserControl
     {
-        public ImageView()
+        public ImageControl()
         {
             InitializeComponent();
         }

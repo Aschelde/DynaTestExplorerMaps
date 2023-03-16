@@ -8,7 +8,12 @@ namespace DynaTestExplorerMaps.ViewModels
 {
     public class MainWindowViewModel
     {
-        public MainWindowViewModel() { }
+        private MapViewModel _mapViewModel;
+        private string _selectionId;
 
+        public MainWindowViewModel()
+        {
+
+        }
     }
 }

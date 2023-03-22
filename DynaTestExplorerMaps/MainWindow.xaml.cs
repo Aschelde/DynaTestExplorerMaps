@@ -30,8 +30,8 @@ namespace DynaTestExplorerMaps
         {
             InitializeComponent();
             ImageLoader imageLoader = new ImageLoader();
-            MapViewModel mapViewModel = new MapViewModel();
-            DataContext = mapViewModel;
+            MvvmMapViewModel mvvmMapViewModel = new MvvmMapViewModel();
+            DataContext = mvvmMapViewModel;
 
 
             this.WindowStyle = WindowStyle.SingleBorderWindow;
@@ -56,8 +56,8 @@ namespace DynaTestExplorerMaps
 
         private void scrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
-            MapViewModel mapViewModel = (MapViewModel)DataContext;
-            if (mapViewModel == null)
+            MvvmMapViewModel mvvmMapViewModel = (MvvmMapViewModel)DataContext;
+            if (mvvmMapViewModel == null)
             { 
                 return;
             }
@@ -79,7 +79,7 @@ namespace DynaTestExplorerMaps
                     if (imageItem != null)
                     {
                         // Update the MapPoint in the MapViewModel
-                        mapViewModel.UpdateTracker(imageItem.Id);
+                        mvvmMapViewModel.UpdateTracker(imageItem.Id);
                     }
                     break;
                 }

@@ -18,16 +18,7 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <Grid Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <esri:MapView x:Name="MainMapView"
-                    Map="{Binding Map}"
-                    GraphicsOverlays="{Binding GraphicsOverlays}">
-                <i:Interaction.Triggers>
-                    <i:EventTrigger EventName="GeoViewTapped">
-                        <i:InvokeCommandAction Command="{Binding GeoViewTappedCommand}"
-                                CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type esri:MapView}}, Path=EventArgs}" />
-                    </i:EventTrigger>
-                </i:Interaction.Triggers>
-            </esri:MapView>
+            <esri:MapView x:Name="MainMapView"/>
         </Grid>
     </Grid>
 </UserControl>

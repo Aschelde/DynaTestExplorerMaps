@@ -36,7 +36,6 @@ namespace DynaTestExplorerMaps.ViewModels
         private List<GpsPoint> points;
         private Dictionary<Graphic, GpsPoint> _pointGraphicToGpsPointMap;
         private string _selectionId;
-        private string _previousSelectionId;
 
         public ICommand GeoViewTappedCommand { get; set; }
 
@@ -108,16 +107,6 @@ namespace DynaTestExplorerMaps.ViewModels
             // Create a new graphics overlay to contain a variety of graphics.
             _gpsPointsGraphicsOverlay = new GraphicsOverlay();
 
-            // Add the overlay to a graphics overlay collection.
-            GraphicsOverlayCollection overlays = new GraphicsOverlayCollection
-            {
-                _gpsPointsGraphicsOverlay
-            };
-
-            // Create a point geometry.
-
-            var pilAgerVej0 = new MapPoint(11.32630045, 55.41475820, SpatialReferences.Wgs84);
-
             GPSPointLoader loader = new GPSPointLoader();
             loader.setPath("C:\\Users\\Asger\\Bachelor\\3336518-0_Pilagervej - IRI Milestones\\3336518-0_Pilagervej - IRI Milestones\\3336518-0_Pilagervej.GPX");
             points = loader.getGpsPoints();
@@ -167,17 +156,14 @@ namespace DynaTestExplorerMaps.ViewModels
             var lineGraphic = new Graphic(polylineBuilder.ToGeometry(), lineSymbol);
             _gpsPointsGraphicsOverlay.Graphics.Add(lineGraphic);
 
-            //Add the graphics overlays to the MapView.
-            foreach (var overlay in _graphicsOverlays)
-            {
-                _mapView.GraphicsOverlays.Add(overlay);
-            }
+            //Add the graphics overlay to the MapView.
+            _mapView.GraphicsOverlays.Add(_gpsPointsGraphicsOverlay);
         }
 
         public void UpdateTracker(string Id)
         {
-            // Look for the existing graphic for the selected ID in the _gpsPointsGraphicsOverlay.
-            Graphic selectedGraphic = _gpsPointsGraphicsOverlay.Graphics.FirstOrDefault(g => _pointGraphicToGpsPointMap[g].Name == _selectionId);
+            // Look for the existing graphic for the selected ID in the _mapView.GraphicsOverlays.
+            Graphic selectedGraphic = _mapView.GraphicsOverlays.SelectMany(g => g.Graphics).FirstOrDefault(g => _pointGraphicToGpsPointMap[g].Name == _selectionId);
 
             if (selectedGraphic != null)
             {
@@ -200,9 +186,9 @@ namespace DynaTestExplorerMaps.ViewModels
             GpsPoint? point = points.Find(GpsPoint => GpsPoint.Name == Id);
 
             // Find the existing graphic for the new GPS point for the selected ID in the _gpsPointsGraphicsOverlay.
-            Graphic newGraphic = _gpsPointsGraphicsOverlay.Graphics.FirstOrDefault(g => _pointGraphicToGpsPointMap[g] == point);
+            Graphic newGraphic = _mapView.GraphicsOverlays.SelectMany(g => g.Graphics).FirstOrDefault(g => _pointGraphicToGpsPointMap[g] == point);
 
-            if (newGraphic != null && _pointGraphicToGpsPointMap[selectedGraphic].Name == _previousSelectionId)
+            if (newGraphic != null && _pointGraphicToGpsPointMap[selectedGraphic].Name == _selectionId)
             {
                 // Update the existing graphic for the new GPS point with a different symbol.
                 var pointSymbol = new SimpleMarkerSymbol

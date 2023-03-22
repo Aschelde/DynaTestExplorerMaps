@@ -16,18 +16,37 @@ namespace DynaTestExplorerMaps
     public partial class App : Application
     {
         public static IHost? AppHost { get; private set; }
-
-        public App()
-        {
-            AppHost = Host.CreateDefaultBuilder().ConfigureServices((hostContext, services) =>
-            {
-                services.AddSingleton<MainWindow>();
-            }).Build();
-        }
+        public static IServiceProvider ServiceProvider { get; private set; }
 
         protected override async void OnStartup(StartupEventArgs e)
         {
-            //Authentication for ArcGIS location services
+            InitializeArcGISRuntimeEnvironment();
+
+            AppHost = Host.CreateDefaultBuilder().ConfigureServices((hostContext, services) =>
+            {
+                services.AddSingleton<MainWindow>();
+                services.AddTransient<MapViewModel>();
+                services.AddTransient<MapControl>(sp => new MapControl(sp.GetService<MapViewModel>()));
+            }).Build();
+
+            ServiceProvider = AppHost.Services;
+
+            await AppHost!.StartAsync();
+            var startupForm = ServiceProvider.GetRequiredService<MainWindow>();
+            startupForm.DataContext = new MainWindowViewModel();
+            startupForm.Show();
+
+            base.OnStartup(e);
+        }
+
+        protected override async void OnExit(ExitEventArgs e)
+        {
+            await AppHost!.StopAsync();
+            base.OnExit(e);
+        }
+
+        private void InitializeArcGISRuntimeEnvironment()
+        {
             try
             {
                 // Initialize the ArcGIS Maps SDK runtime before any components are created.
@@ -36,7 +55,7 @@ namespace DynaTestExplorerMaps
                 .UseApiKey("AAPK05941c697899421c86df55261f04684cghLH1EjsYnL5YSkn2AukEOaRqixQryZAp9v5Av3VDPRtHHlQttyG_le3zufHiP9M")
                   .ConfigureAuthentication(auth => auth
                      .UseDefaultChallengeHandler() // Use the default authentication dialog
-                  // .UseOAuthAuthorizeHandler(myOauthAuthorizationHandler) // Configure a custom OAuth dialog
+                                                   // .UseOAuthAuthorizeHandler(myOauthAuthorizationHandler) // Configure a custom OAuth dialog
                    )
                 );
             }
@@ -47,18 +66,6 @@ namespace DynaTestExplorerMaps
                 // Exit application
                 this.Shutdown();
             }
-
-            await AppHost!.StartAsync();
-            var startupForm = AppHost.Services.GetRequiredService<MainWindow>();
-            startupForm!.DataContext = new MainWindowViewModel();
-            startupForm!.Show();
-            base.OnStartup(e);
-        }
-
-        protected override async void OnExit(ExitEventArgs e)
-        {
-            await AppHost!.StopAsync();
-            base.OnExit(e);
         }
     }
 }

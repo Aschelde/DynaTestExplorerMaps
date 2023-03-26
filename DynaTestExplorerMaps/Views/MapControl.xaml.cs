@@ -18,6 +18,10 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Esri.ArcGISRuntime.UI;
+using CommunityToolkit.Mvvm.Messaging;
+using DynaTestExplorerMaps.Messages;
+using Esri.ArcGISRuntime.Data;
+using System.Diagnostics;
 
 namespace DynaTestExplorerMaps.Views
 {
@@ -31,6 +35,8 @@ namespace DynaTestExplorerMaps.Views
             InitializeComponent();
 
             this.DataContext = App.AppHost.Services.GetRequiredService<MapViewModel>();
+  
+            MainMapView.Loaded += MainMapView_Loaded;
             MainMapView.GeoViewTapped += OnGeoViewTapped;
         }
         public MapControl(MapViewModel mapViewModel)
@@ -38,21 +44,41 @@ namespace DynaTestExplorerMaps.Views
             InitializeComponent();
 
             this.DataContext = mapViewModel;
+
+            MainMapView.Loaded += MainMapView_Loaded;
             MainMapView.GeoViewTapped += OnGeoViewTapped;
         }
 
-        private void OnGeoViewTapped(object sender, GeoViewInputEventArgs e)
+        private void MainMapView_Loaded(object sender, RoutedEventArgs e)
         {
-            MapViewModel mapViewModel = DataContext as MapViewModel;
-            mapViewModel.GeoViewTappedCommand.Execute(e);
-        }
-
-        /*private void MainMapView_Loaded(object sender, RoutedEventArgs e)
-        {
-            //TODO: use bounds to set the center point
             // Set the view point after the MainMapView control has loaded
             MapPoint mapCenterPoint = new MapPoint(11.32630045, 55.41475820, SpatialReferences.Wgs84);
             MainMapView.SetViewpoint(new Viewpoint(mapCenterPoint, 10000));
-        }*/
+        }
+
+        private async void OnGeoViewTapped(object sender, GeoViewInputEventArgs e)
+        {
+            MapViewModel mapViewModel = DataContext as MapViewModel;
+            IReadOnlyList<IdentifyGraphicsOverlayResult> results = await MainMapView.IdentifyGraphicsOverlaysAsync(e.Position, tolerance: 2, false);
+
+            foreach (IdentifyGraphicsOverlayResult result in results)
+            {
+                if (result.GraphicsOverlay.Id == "gpsPointsOverlay")
+                {
+                    if (result.Graphics.Count > 0)
+                    {
+                        Graphic identifiedGraphic = result.Graphics.First();
+                        mapViewModel.GeoViewTappedCommand.Execute(identifiedGraphic);
+                    }
+                }
+                else if (result.GraphicsOverlay.Id == "linesOverlay")
+                {
+                    if (result.Graphics.Count > 0)
+                    {
+                        // Do nothing so far
+                    }
+                }
+            }
+        }
     }
 }

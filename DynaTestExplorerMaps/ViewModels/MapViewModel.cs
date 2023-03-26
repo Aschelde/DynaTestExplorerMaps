@@ -15,6 +15,7 @@ using Esri.ArcGISRuntime.UI.Controls;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -31,8 +32,8 @@ namespace DynaTestExplorerMaps.ViewModels
     public class MapViewModel : BaseViewModel, IUserControlViewModel
     {
         private Map _map;
-        private MapView _mapView;
         private GraphicsOverlay _gpsPointsGraphicsOverlay;
+        private GraphicsOverlay _linesGraphicsOverlay;
         private List<GpsPoint> points;
         private Dictionary<Graphic, GpsPoint> _pointGraphicToGpsPointMap;
         private string _selectionId;
@@ -47,7 +48,7 @@ namespace DynaTestExplorerMaps.ViewModels
 
             CreateGraphics();
 
-            GeoViewTappedCommand = new RelayCommand<GeoViewInputEventArgs>(HandleGeoViewTapped);
+            GeoViewTappedCommand = new RelayCommand<Graphic>(HandleGeoViewTapped);
 
             WeakReferenceMessenger.Default.Register<SelectionChangedMessage>(this, (r, m) =>
             {
@@ -71,16 +72,6 @@ namespace DynaTestExplorerMaps.ViewModels
             }
         }
 
-        public MapView MapView
-        { 
-            get { return _mapView; } 
-            set
-            {
-                _mapView = value;
-                OnPropertyChanged();
-            } 
-        }
-
         private GraphicsOverlayCollection _graphicsOverlays;
         public GraphicsOverlayCollection GraphicsOverlays
         {
@@ -97,15 +88,27 @@ namespace DynaTestExplorerMaps.ViewModels
             // Create a new map with a 'topographic vector' basemap.
             Map = new Map(BasemapStyle.ArcGISStreets);
 
-            _mapView = new MapView();
-            _mapView.Map = Map;
-
         }
 
         private void CreateGraphics()
         {
             // Create a new graphics overlay to contain a variety of graphics.
-            _gpsPointsGraphicsOverlay = new GraphicsOverlay();
+            _gpsPointsGraphicsOverlay = new GraphicsOverlay()
+            {
+                Id = "gpsPointsOverlay"
+            };
+
+            _linesGraphicsOverlay = new GraphicsOverlay()
+            {
+                Id = "linesOverlay"
+            };
+
+            GraphicsOverlayCollection overlays = new GraphicsOverlayCollection
+            {
+                _linesGraphicsOverlay,
+                _gpsPointsGraphicsOverlay
+            };
+            this.GraphicsOverlays = overlays;
 
             GPSPointLoader loader = new GPSPointLoader();
             loader.setPath("C:\\Users\\Asger\\Bachelor\\3336518-0_Pilagervej - IRI Milestones\\3336518-0_Pilagervej - IRI Milestones\\3336518-0_Pilagervej.GPX");
@@ -154,16 +157,13 @@ namespace DynaTestExplorerMaps.ViewModels
 
             // Create a graphic from the polyline builder.
             var lineGraphic = new Graphic(polylineBuilder.ToGeometry(), lineSymbol);
-            _gpsPointsGraphicsOverlay.Graphics.Add(lineGraphic);
-
-            //Add the graphics overlay to the MapView.
-            _mapView.GraphicsOverlays.Add(_gpsPointsGraphicsOverlay);
+            _linesGraphicsOverlay.Graphics.Add(lineGraphic);
         }
 
         public void UpdateTracker(string Id)
         {
             // Look for the existing graphic for the selected ID in the _mapView.GraphicsOverlays.
-            Graphic selectedGraphic = _mapView.GraphicsOverlays.SelectMany(g => g.Graphics).FirstOrDefault(g => _pointGraphicToGpsPointMap[g].Name == _selectionId);
+            Graphic selectedGraphic = _gpsPointsGraphicsOverlay.Graphics.FirstOrDefault(g => _pointGraphicToGpsPointMap[g].Name == _selectionId);
 
             if (selectedGraphic != null)
             {
@@ -186,7 +186,7 @@ namespace DynaTestExplorerMaps.ViewModels
             GpsPoint? point = points.Find(GpsPoint => GpsPoint.Name == Id);
 
             // Find the existing graphic for the new GPS point for the selected ID in the _gpsPointsGraphicsOverlay.
-            Graphic newGraphic = _mapView.GraphicsOverlays.SelectMany(g => g.Graphics).FirstOrDefault(g => _pointGraphicToGpsPointMap[g] == point);
+            Graphic newGraphic = _gpsPointsGraphicsOverlay.Graphics.FirstOrDefault(g => _pointGraphicToGpsPointMap[g] == point);
 
             if (newGraphic != null && _pointGraphicToGpsPointMap[selectedGraphic].Name == _selectionId)
             {
@@ -209,29 +209,21 @@ namespace DynaTestExplorerMaps.ViewModels
 
         public void UpdateSelection(string newSelectionId) 
         {
+            Debug.WriteLine("UpdateSelection");
             UpdateTracker(newSelectionId);
             _selectionId = newSelectionId;
         }
 
-        private async void HandleGeoViewTapped(GeoViewInputEventArgs e)
+        private async void HandleGeoViewTapped(Graphic identifiedGraphic)
         {
-            var results = await MapView.IdentifyGraphicsOverlayAsync(_gpsPointsGraphicsOverlay, e.Position, 10, false);
-
-            if (results.Graphics.Count > 0)
+            Debug.WriteLine("Tapped");
+            if (_pointGraphicToGpsPointMap.ContainsKey(identifiedGraphic))
             {
-                var identifiedGraphic = results.Graphics.First();
-
-                // Check if the identified graphic is a point graphic.
-                if (identifiedGraphic.Geometry is MapPoint)
-                {
-                    var gpsPoint = _pointGraphicToGpsPointMap[identifiedGraphic];
-                    
-                    if (gpsPoint != null && gpsPoint.Name != _selectionId)
-                    {
-                        UpdateSelection(gpsPoint.Name);
-                        WeakReferenceMessenger.Default.Send(new SelectionChangedMessage(gpsPoint.Name));
-                    }
-                }
+                Debug.WriteLine("Point identified");
+                // Get the corresponding GpsPoint from the dictionary
+                GpsPoint gpsPoint = _pointGraphicToGpsPointMap[identifiedGraphic];
+                UpdateTracker(gpsPoint.Name);
+                WeakReferenceMessenger.Default.Send(new SelectionChangedMessage(gpsPoint.Name));
             }
         }
     }

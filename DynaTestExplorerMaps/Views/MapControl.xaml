@@ -7,18 +7,13 @@
              xmlns:viewmodels="clr-namespace:DynaTestExplorerMaps.ViewModels" 
              xmlns:esri="http://schemas.esri.com/arcgis/runtime/2013"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-             mc:Ignorable="d"
-             d:DesignHeight="450" d:DesignWidth="800">
-             
+             mc:Ignorable="d">
+
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
-        </Grid.ColumnDefinitions>
         <Grid Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <esri:MapView x:Name="MainMapView"/>
+            <esri:MapView x:Name="MainMapView"
+                    Map="{Binding Map}"
+                    GraphicsOverlays="{Binding GraphicsOverlays}" />
         </Grid>
     </Grid>
 </UserControl>

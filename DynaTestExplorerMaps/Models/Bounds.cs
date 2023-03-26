@@ -20,6 +20,11 @@ namespace DynaTestExplorerMaps.model
             this.maxLat = maxLat;
             this.maxLon = maxLon;
         }
+
+        public double MinLat { get => minLat; set => minLat = value; }
+        public double MinLon { get => minLon; set => minLon = value; }
+        public double MaxLat { get => maxLat; set => maxLat = value; }
+        public double MaxLon { get => maxLon; set => maxLon = value; }
     }
 
 }

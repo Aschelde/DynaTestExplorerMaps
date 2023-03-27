@@ -14,7 +14,8 @@ namespace DynaTestExplorerMaps.Views
         {
             InitializeComponent();
 
-            this.mainContentControl.Content = App.AppHost.Services.GetRequiredService<MapControl>();
+            this.mapContentControl.Content = App.AppHost.Services.GetRequiredService<MapControl>();
+            this.ImageContentControl.Content = App.AppHost.Services.GetRequiredService<ImageControl>();
 
             this.WindowStyle = WindowStyle.SingleBorderWindow;
 

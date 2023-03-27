@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Windows.Media.Imaging;
 using System.Windows.Xps;
+using System.Diagnostics;
 
 namespace DynaTestExplorerMaps.model
 {
@@ -51,6 +52,7 @@ namespace DynaTestExplorerMaps.model
                     ImageItem item = new ImageItem { Id = id, Image = bitmap };
                     images.Add(item);
                 }
+                Debug.WriteLine("An ImageItem has Id of type: " + images[17].Id);
                 return images;
 
             }

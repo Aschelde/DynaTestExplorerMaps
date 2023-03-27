@@ -52,6 +52,7 @@ namespace DynaTestExplorerMaps.ViewModels
 
             WeakReferenceMessenger.Default.Register<SelectionChangedMessage>(this, (r, m) =>
             {
+                Debug.WriteLine("MapViewModel: SelectionChangedMessage received");
                 UpdateSelection(m.Value);
             });
         }
@@ -209,17 +210,19 @@ namespace DynaTestExplorerMaps.ViewModels
 
         public void UpdateSelection(string newSelectionId) 
         {
-            Debug.WriteLine("UpdateSelection");
+            if (_selectionId == newSelectionId)
+            {
+                return;
+            }
+            Debug.WriteLine("ImageViewModel: SelectionChangedMessage received with new id " + newSelectionId);
             UpdateTracker(newSelectionId);
             _selectionId = newSelectionId;
         }
 
         private async void HandleGeoViewTapped(Graphic identifiedGraphic)
         {
-            Debug.WriteLine("Tapped");
             if (_pointGraphicToGpsPointMap.ContainsKey(identifiedGraphic))
             {
-                Debug.WriteLine("Point identified");
                 // Get the corresponding GpsPoint from the dictionary
                 GpsPoint gpsPoint = _pointGraphicToGpsPointMap[identifiedGraphic];
                 UpdateTracker(gpsPoint.Name);

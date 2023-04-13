@@ -4,14 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DynaTestExplorerMaps.model
+namespace DynaTestExplorerMaps.Models
 {
-    class GpsPoint
+    public class GpsPoint
     {
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
-        public double Elevation { get; set; }
-        public DateTime Time { get; set; }
-        public string? Name { get; set; }
+        public int Id { get; set; }
+        public float Distance { get; set; }
+        public float Latitude { get; set; }
+        public float Longitude { get; set; }
     }
 }

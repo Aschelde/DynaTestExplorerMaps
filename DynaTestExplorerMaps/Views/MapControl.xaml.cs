@@ -22,6 +22,9 @@ using CommunityToolkit.Mvvm.Messaging;
 using DynaTestExplorerMaps.Messages;
 using Esri.ArcGISRuntime.Data;
 using System.Diagnostics;
+using System.ComponentModel;
+using static System.Formats.Asn1.AsnWriter;
+using System.Xml.Linq;
 
 namespace DynaTestExplorerMaps.Views
 {
@@ -30,30 +33,70 @@ namespace DynaTestExplorerMaps.Views
     /// </summary>
     public partial class MapControl : UserControl
     {
+        private TaskCompletionSource<bool> _mapViewLoadedTaskCompletionSource = new TaskCompletionSource<bool>();
         public MapControl()
         {
             InitializeComponent();
 
-            this.DataContext = App.AppHost.Services.GetRequiredService<MapViewModel>();
-  
+            MapViewModel mapViewModel = App.AppHost.Services.GetRequiredService<MapViewModel>();
+
+            Debug.WriteLine("MapControl constructor start");
+
             MainMapView.Loaded += MainMapView_Loaded;
+            mapViewModel.PropertyChanged += OnMapViewModelPropertyChanged;
             MainMapView.GeoViewTapped += OnGeoViewTapped;
+
+            Debug.WriteLine("MapControl constructor done");
+
+            if (mapViewModel.Bounds != null)
+            {
+                Debug.WriteLine("Bounds was not null");
+                UpdateViewPointAsync(mapViewModel.Bounds);
+            }
         }
+
         public MapControl(MapViewModel mapViewModel)
         {
             InitializeComponent();
 
             this.DataContext = mapViewModel;
+            Debug.WriteLine("MapControl constructor start");
 
             MainMapView.Loaded += MainMapView_Loaded;
+            mapViewModel.PropertyChanged += OnMapViewModelPropertyChanged;
             MainMapView.GeoViewTapped += OnGeoViewTapped;
+
+            Debug.WriteLine("MapControl constructor done");
+
+            if (mapViewModel.Bounds != null)
+            {
+                Debug.WriteLine("Bounds was not null");
+                UpdateViewPointAsync(mapViewModel.Bounds);
+            }
+        }
+
+        private void OnMapViewModelPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(MapViewModel.Bounds))
+            {
+                MapViewModel mapViewModel = (MapViewModel)sender;
+                UpdateViewPointAsync(mapViewModel.Bounds);
+            }
+        }
+
+        private async void UpdateViewPointAsync(Envelope bounds)
+        {
+            double padding = 10;
+            await _mapViewLoadedTaskCompletionSource.Task;
+            Debug.WriteLine("Sizes: " + MainMapView.ActualWidth + ", " + bounds.Width);
+            double conversionFactor = 500;
+            double scale = (Math.Max(bounds.Width / MainMapView.ActualWidth, bounds.Height / MainMapView.ActualHeight)+padding) * conversionFactor;
+            MainMapView.SetViewpoint(new Viewpoint(bounds.GetCenter(), scale));
         }
 
         private void MainMapView_Loaded(object sender, RoutedEventArgs e)
         {
-            // Set the view point after the MainMapView control has loaded
-            MapPoint mapCenterPoint = new MapPoint(11.32630045, 55.41475820, SpatialReferences.Wgs84);
-            MainMapView.SetViewpoint(new Viewpoint(mapCenterPoint, 10000));
+            _mapViewLoadedTaskCompletionSource.SetResult(true);
         }
 
         private async void OnGeoViewTapped(object sender, GeoViewInputEventArgs e)

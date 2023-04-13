@@ -8,9 +8,9 @@ using Windows.System;
 
 namespace DynaTestExplorerMaps.Messages
 {
-    public class SelectionChangedMessage : ValueChangedMessage<string>
+    public class SelectionChangedMessage : ValueChangedMessage<int>
     {
-        public SelectionChangedMessage(string value) : base(value)
+        public SelectionChangedMessage(int value) : base(value)
         {
         }
     }

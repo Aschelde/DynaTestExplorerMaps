@@ -1,5 +1,7 @@
+using DynaTestExplorerMaps.Models;
 using DynaTestExplorerMaps.ViewModels;
 using DynaTestExplorerMaps.Views;
+using DynaTestExplorerMaps.Interfaces;
 using Esri.ArcGISRuntime;
 using Esri.ArcGISRuntime.Http;
 using Esri.ArcGISRuntime.Security;
@@ -24,6 +26,7 @@ namespace DynaTestExplorerMaps
 
             AppHost = Host.CreateDefaultBuilder().ConfigureServices((hostContext, services) =>
             {
+                services.AddSingleton<IDataAccessLayer>(sp => new DataAccessLayer(surveyId: 0));
                 services.AddSingleton<MainWindow>();
                 services.AddTransient<MapViewModel>();
                 services.AddTransient<ImageViewModel>();

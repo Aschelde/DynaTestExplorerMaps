@@ -1,4 +1,4 @@
-﻿using DynaTestExplorerMaps.model;
+﻿using DynaTestExplorerMaps.Models;
 using DynaTestExplorerMaps.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -24,24 +24,16 @@ namespace DynaTestExplorerMaps.Views
     {
         private FrameworkElement _lastElementInCenterView;
         private ImageItem _selectedImage;
-
-        public ImageControl()
-        {
-            InitializeComponent();
-            ImageViewModel imageViewModel = App.AppHost.Services.GetRequiredService<ImageViewModel>();
-            imageControl.ItemsSource = imageViewModel.GetImages();
-
-            this.DataContext = imageViewModel;
-
-            imageViewModel.PropertyChanged += OnImageViewModelPropertyChanged;
-            scrollViewer.ScrollChanged += ScrollViewer_ScrollChanged;
-        }
+        private int _lastImageId;
 
         public ImageControl(ImageViewModel imageViewModel)
         {
             InitializeComponent();
-            imageControl.ItemsSource = imageViewModel.GetImages();
+            var images = imageViewModel.GetImages();
+            imageControl.ItemsSource = images;
             this.DataContext = imageViewModel;
+
+            _lastImageId = images[^1].Id;
 
             imageViewModel.PropertyChanged += OnImageViewModelPropertyChanged;
             scrollViewer.ScrollChanged += ScrollViewer_ScrollChanged;
@@ -57,11 +49,13 @@ namespace DynaTestExplorerMaps.Views
                     _selectedImage = value;
                     if (_selectedImage != null)
                     {
-                        Debug.WriteLine("Go this far in SelectedImage");
+                        Debug.WriteLine("Got this far in SelectedImage");
                         //find item from imageControl.items with same Id as _selectedImage
-                        var container = imageControl.ItemContainerGenerator.ContainerFromItem(_selectedImage) as FrameworkElement;
+
+                        var container = imageControl.ItemContainerGenerator.ContainerFromIndex(_selectedImage.Id) as FrameworkElement;
                         if (container != null)
                         {
+                            Debug.WriteLine("container was not null");
                             container.BringIntoView();
                         }
                     }
@@ -71,12 +65,29 @@ namespace DynaTestExplorerMaps.Views
 
         private void ScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
-            Debug.WriteLine("Discovered scrollevent");
-            foreach (var item in imageControl.Items)
+            int firstVisibleIndex = -1;
+            int lastVisibleIndex = -1;
+            Debug.WriteLine("Scroller changed");
+            // Find the index of the first and last visible items
+            for (int i = 0; i < imageControl.Items.Count; i++)
+            {
+                if (imageControl.ItemContainerGenerator.ContainerFromIndex(i) is FrameworkElement container && IsElementVisible(container))
+                {
+                    if (firstVisibleIndex == -1)
+                    {
+                        firstVisibleIndex = i;
+                    }
+                    lastVisibleIndex = i;
+                }
+            }
+
+            Debug.WriteLine("Found indexes: " + firstVisibleIndex + " " + lastVisibleIndex);
+            for (int i = firstVisibleIndex; i <= lastVisibleIndex; i++)
             {
                 // Get the container for the image
-                if (imageControl.ItemContainerGenerator.ContainerFromItem(item) is FrameworkElement container && IsElementInCenterView(container, scrollViewer))
+                if (imageControl.ItemContainerGenerator.ContainerFromIndex(i) is FrameworkElement container && IsElementInCenterView(container, scrollViewer))
                 {
+                    Debug.WriteLine("Found element in center");
                     // Check if this is the same element as last time
                     if (container == _lastElementInCenterView)
                     {
@@ -84,11 +95,13 @@ namespace DynaTestExplorerMaps.Views
                     }
 
                     // Get the ImageItem instance from the item
-                    ImageItem imageItem = (ImageItem)item;
+                    ImageItem imageItem = (ImageItem)imageControl.Items[i];
                     if (imageItem != null)
                     {
+                        Debug.WriteLine("Found imageItem: " + imageItem.Id);
                         // Update the selection in the view model
                         ImageViewModel imageViewModel = DataContext as ImageViewModel;
+                        _selectedImage = imageItem;
                         imageViewModel.ImageControlScrolledCommand.Execute(imageItem.Id);
                     }
                     break;
@@ -98,19 +111,28 @@ namespace DynaTestExplorerMaps.Views
 
         private bool IsElementInCenterView(FrameworkElement element, FrameworkElement container)
         {
-            if (!element.IsVisible)
-                return false;
-
             // Create Rect to represent the element's bounds in the container's coordinate space
             Rect bounds = element.TransformToAncestor(container).TransformBounds(new Rect(0.0, 0.0, element.ActualWidth, element.ActualHeight));
 
-            // calculate the center of the element's bounds
-            double elementYCenter = bounds.Top + (bounds.Height / 2);
+            // Calculate the distance between the top of the element and the vertical center of the container
+            double elementTop = bounds.Top;
+            double elementBottom = bounds.Bottom;
             double containerYCenter = container.ActualHeight / 2;
 
-            //check if the element is within the container's center
-            double verticalOffset = containerYCenter - elementYCenter;
-            return Math.Abs(verticalOffset) <= (container.ActualHeight / 2);
+            if ((elementTop < containerYCenter) && (elementBottom > containerYCenter))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private bool IsElementVisible(FrameworkElement element)
+        {
+            // Get the position of the element relative to the ScrollViewer
+            var elementRect = element.TransformToAncestor(scrollViewer).TransformBounds(new Rect(0.0, 0.0, element.ActualWidth, element.ActualHeight));
+
+            // Check if the element is within the bounds of the ScrollViewer's viewport
+            return elementRect.Bottom > 0 && elementRect.Top < scrollViewer.ViewportHeight;
         }
 
         private void OnImageViewModelPropertyChanged(object sender, PropertyChangedEventArgs e)

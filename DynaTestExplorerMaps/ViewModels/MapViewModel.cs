@@ -2,7 +2,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using DynaTestExplorerMaps.EventHandling;
 using DynaTestExplorerMaps.Interfaces;
 using DynaTestExplorerMaps.Messages;
-using DynaTestExplorerMaps.model;
+using DynaTestExplorerMaps.Models;
 using Esri.ArcGISRuntime.Data;
 using Esri.ArcGISRuntime.Geometry;
 using Esri.ArcGISRuntime.Location;
@@ -12,6 +12,7 @@ using Esri.ArcGISRuntime.Symbology;
 using Esri.ArcGISRuntime.Tasks;
 using Esri.ArcGISRuntime.UI;
 using Esri.ArcGISRuntime.UI.Controls;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -31,22 +32,29 @@ namespace DynaTestExplorerMaps.ViewModels
     /// </summary>
     public class MapViewModel : BaseViewModel, IUserControlViewModel
     {
+        private readonly IDataAccessLayer _dataAccessLayer;
         private Map _map;
+        private GraphicsOverlayCollection _graphicsOverlays;
         private GraphicsOverlay _gpsPointsGraphicsOverlay;
         private GraphicsOverlay _linesGraphicsOverlay;
+        private Envelope _bounds;
         private List<GpsPoint> points;
         private Dictionary<Graphic, GpsPoint> _pointGraphicToGpsPointMap;
-        private string _selectionId;
+        private int _selectionId;
 
         public ICommand GeoViewTappedCommand { get; set; }
 
         public MapViewModel()
         {
+            _dataAccessLayer = App.AppHost.Services.GetRequiredService<IDataAccessLayer>();
+
             SetupMap();
 
-            _selectionId = "000000";
+            _selectionId = 0;
 
             CreateGraphics();
+
+            CreateBounds();
 
             GeoViewTappedCommand = new RelayCommand<Graphic>(HandleGeoViewTapped);
 
@@ -73,7 +81,6 @@ namespace DynaTestExplorerMaps.ViewModels
             }
         }
 
-        private GraphicsOverlayCollection _graphicsOverlays;
         public GraphicsOverlayCollection GraphicsOverlays
         {
             get { return _graphicsOverlays; }
@@ -88,7 +95,29 @@ namespace DynaTestExplorerMaps.ViewModels
         {
             // Create a new map with a 'topographic vector' basemap.
             Map = new Map(BasemapStyle.ArcGISStreets);
+        }
 
+        private void CreateBounds()
+        {
+            // Get the extent of your graphics overlay
+            Envelope graphicsExtent = _gpsPointsGraphicsOverlay.Graphics.Select(graphic => graphic.Geometry.Extent).CombineExtents();
+
+            Debug.WriteLine(graphicsExtent.XMin + ", " + graphicsExtent.YMin + ", " + graphicsExtent.XMax + ", " + graphicsExtent.YMax);
+            SpatialReference projectedSR = SpatialReferences.WebMercator;
+            Bounds = GeometryEngine.Project(graphicsExtent, projectedSR) as Envelope;
+        }
+
+        public Envelope Bounds
+        {
+            get { return _bounds; }
+            set
+            {
+                if (_bounds != value)
+                {
+                    _bounds = value;
+                    OnPropertyChanged(nameof(Bounds));
+                }
+            }
         }
 
         private void CreateGraphics()
@@ -111,9 +140,7 @@ namespace DynaTestExplorerMaps.ViewModels
             };
             this.GraphicsOverlays = overlays;
 
-            GPSPointLoader loader = new GPSPointLoader();
-            loader.setPath("C:\\Users\\Asger\\Bachelor\\3336518-0_Pilagervej - IRI Milestones\\3336518-0_Pilagervej - IRI Milestones\\3336518-0_Pilagervej.GPX");
-            points = loader.getGpsPoints();
+            points = _dataAccessLayer.GetInterpolatedImagePoints();
 
             // Create a symbol to define how the point is displayed.
             var pointSymbol = new SimpleMarkerSymbol
@@ -159,12 +186,14 @@ namespace DynaTestExplorerMaps.ViewModels
             // Create a graphic from the polyline builder.
             var lineGraphic = new Graphic(polylineBuilder.ToGeometry(), lineSymbol);
             _linesGraphicsOverlay.Graphics.Add(lineGraphic);
+
+            UpdateTracker(_selectionId);
         }
 
-        public void UpdateTracker(string Id)
+        public void UpdateTracker(int Id)
         {
             // Look for the existing graphic for the selected ID in the _mapView.GraphicsOverlays.
-            Graphic selectedGraphic = _gpsPointsGraphicsOverlay.Graphics.FirstOrDefault(g => _pointGraphicToGpsPointMap[g].Name == _selectionId);
+            Graphic selectedGraphic = _gpsPointsGraphicsOverlay.Graphics.FirstOrDefault(g => _pointGraphicToGpsPointMap[g].Id == _selectionId);
 
             if (selectedGraphic != null)
             {
@@ -184,12 +213,12 @@ namespace DynaTestExplorerMaps.ViewModels
                 selectedGraphic.Symbol = pointSymbol;
             }
 
-            GpsPoint? point = points.Find(GpsPoint => GpsPoint.Name == Id);
+            GpsPoint? point = points.Find(GpsPoint => GpsPoint.Id == Id);
 
             // Find the existing graphic for the new GPS point for the selected ID in the _gpsPointsGraphicsOverlay.
             Graphic newGraphic = _gpsPointsGraphicsOverlay.Graphics.FirstOrDefault(g => _pointGraphicToGpsPointMap[g] == point);
 
-            if (newGraphic != null && _pointGraphicToGpsPointMap[selectedGraphic].Name == _selectionId)
+            if (newGraphic != null && _pointGraphicToGpsPointMap[selectedGraphic].Id == _selectionId)
             {
                 // Update the existing graphic for the new GPS point with a different symbol.
                 var pointSymbol = new SimpleMarkerSymbol
@@ -208,7 +237,7 @@ namespace DynaTestExplorerMaps.ViewModels
             }
         }
 
-        public void UpdateSelection(string newSelectionId) 
+        public void UpdateSelection(int newSelectionId) 
         {
             if (_selectionId == newSelectionId)
             {
@@ -225,8 +254,8 @@ namespace DynaTestExplorerMaps.ViewModels
             {
                 // Get the corresponding GpsPoint from the dictionary
                 GpsPoint gpsPoint = _pointGraphicToGpsPointMap[identifiedGraphic];
-                UpdateTracker(gpsPoint.Name);
-                WeakReferenceMessenger.Default.Send(new SelectionChangedMessage(gpsPoint.Name));
+                UpdateTracker(gpsPoint.Id);
+                WeakReferenceMessenger.Default.Send(new SelectionChangedMessage(gpsPoint.Id));
             }
         }
     }

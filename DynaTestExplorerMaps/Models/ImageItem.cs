@@ -5,11 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 
-namespace DynaTestExplorerMaps.model
+namespace DynaTestExplorerMaps.Models
 {
     public class ImageItem
     {
+        public int Id { get; set; }
         public BitmapImage? Image { get; set; }
-        public string? Id { get; set; }
     }
 }

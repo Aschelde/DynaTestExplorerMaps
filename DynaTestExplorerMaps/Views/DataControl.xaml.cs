@@ -1,5 +1,9 @@
-﻿using System;
+﻿using DynaTestExplorerMaps.Models;
+using DynaTestExplorerMaps.ViewModels;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,9 +24,29 @@ namespace DynaTestExplorerMaps.Views
     /// </summary>
     public partial class DataControl : UserControl
     {
-        public DataControl()
+        private int _selectionId;
+        Dictionary<GpsPoint, IriItem> _iriData;
+        public DataControl(DataViewModel dataViewModel)
         {
             InitializeComponent();
+            
+            this.DataContext = dataViewModel;
+
+            _iriData = dataViewModel.GetIriData();
+
+            dataViewModel.PropertyChanged += OnDataViewModelPropertyChanged;
+        }
+
+        private void OnDataViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(DataViewModel.SelectionId))
+            {
+                DataViewModel dataViewModel = (DataViewModel)sender;
+                _selectionId = dataViewModel.SelectionId;
+
+                //set text to value with GpsPoint.Id == SelectionId
+                valueText.Text = _iriData[_selectionId];
+            }
         }
     }
 }

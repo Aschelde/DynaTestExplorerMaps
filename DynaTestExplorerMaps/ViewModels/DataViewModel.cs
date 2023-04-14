@@ -9,26 +9,30 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Diagnostics;
-using DynaTestExplorerMaps.model;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using DynaTestExplorerMaps.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DynaTestExplorerMaps.ViewModels
 {
     public class DataViewModel: BaseViewModel
     {
-        private string _selectionId;
+        private int _selectionId;
         private Dictionary<GpsPoint, IriItem> _iriData;
+        private IDataAccessLayer _dataAccessLayer;
 
         public ICommand DataValueSelectedCommand { get; set; }
 
         public DataViewModel()
         {
-            _selectionId = "000000";
+            _selectionId = 0;
             
-            _iriData = new List<IriItem>();
+            _iriData = new Dictionary<GpsPoint, IriItem>();
 
-            DataValueSelectedCommand = new RelayCommand<string>(HandleDataValueSelected);
+            _dataAccessLayer = App.AppHost.Services.GetRequiredService<IDataAccessLayer>();
+
+            DataValueSelectedCommand = new RelayCommand<int>(HandleDataValueSelected);
 
             WeakReferenceMessenger.Default.Register<SelectionChangedMessage>(this, (r, m) =>
             {
@@ -42,7 +46,7 @@ namespace DynaTestExplorerMaps.ViewModels
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        public string SelectionId
+        public int SelectionId
         {
             get { return _selectionId; }
             set
@@ -55,13 +59,13 @@ namespace DynaTestExplorerMaps.ViewModels
             }
         }
 
-        private void HandleDataValueSelected(string id)
+        private void HandleDataValueSelected(int id)
         {
             UpdateSelection(id);
             WeakReferenceMessenger.Default.Send(new SelectionChangedMessage(_selectionId));
         }
 
-        private void UpdateSelection(string id)
+        private void UpdateSelection(int id)
         {
             if (id == _selectionId)
             {
@@ -71,16 +75,15 @@ namespace DynaTestExplorerMaps.ViewModels
             SelectionId = id;
         }
 
-        public List<IriItem> GetIriData()
+        public Dictionary<GpsPoint, IriItem> GetIriData()
         {
-            if (_iriData == null)
-            {
-                _iriData = new List<IriItem>();
-                IriDataLoader iriDataLoader = new IriDataLoader();
-                iriDataLoader.setPath("C:\\Users\\Asger\\Bachelor\\3336518-0_Pilagervej - IRI Milestones\\3336518-0_Pilagervej - IRI Milestones\\3336518-0_Pilagervej.RSP");
-                _iriData = iriDataLoader.GetIriItems();
-            }
+            var iriItems = _dataAccessLayer.GetIriItems();
+            var gpsPoints = _dataAccessLayer.GetGpsPoints();
 
+            for (int i = 0; i < iriItems.Count; i++)
+            {
+                _iriData.Add(gpsPoints[i], iriItems[i]);
+            }
             return _iriData;
         }
 

@@ -141,5 +141,35 @@ namespace DynaTestExplorerMaps.Models
 
             return images;
         }
+
+        public List<IriItem> GetIriItems()
+        {
+            var iriItems = new List<IriItem>();
+
+            using (var conn = new NpgsqlConnection(connectionString))
+            {
+                conn.Open();
+                using (var cmd = new NpgsqlCommand($"SELECT value_id, distance_begin, iri_value " +
+                        $"FROM iri_values WHERE survey_id = {currentSurveyId}", conn))
+                {
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            var iriItem = new IriItem
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("value_id")),
+                                Distance = reader.GetFloat(reader.GetOrdinal("distance")),
+                                Iri = reader.GetFloat(reader.GetOrdinal("iri_value"))
+                            };
+
+                            iriItems.Add(iriItem);
+                        }
+                    }
+                }
+            }
+
+            return iriItems;
+        }
     }
 }

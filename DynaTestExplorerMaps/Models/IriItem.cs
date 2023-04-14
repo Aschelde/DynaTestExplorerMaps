@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Xml.Serialization;
 
 namespace DynaTestExplorerMaps.Models
 {
-    public class DataPreperationService
+    public class IriItem
     {
-
+        public int Id { get; set; }
+        public float Distance { get; set; }
+        public float Iri { get; set; }
     }
 }

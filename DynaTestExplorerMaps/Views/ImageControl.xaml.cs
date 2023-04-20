@@ -49,13 +49,11 @@ namespace DynaTestExplorerMaps.Views
                     _selectedImage = value;
                     if (_selectedImage != null)
                     {
-                        Debug.WriteLine("Got this far in SelectedImage");
                         //find item from imageControl.items with same Id as _selectedImage
 
                         var container = imageControl.ItemContainerGenerator.ContainerFromIndex(_selectedImage.Id) as FrameworkElement;
                         if (container != null)
                         {
-                            Debug.WriteLine("container was not null");
                             container.BringIntoView();
                         }
                     }
@@ -67,7 +65,6 @@ namespace DynaTestExplorerMaps.Views
         {
             int firstVisibleIndex = -1;
             int lastVisibleIndex = -1;
-            Debug.WriteLine("Scroller changed");
             // Find the index of the first and last visible items
             for (int i = 0; i < imageControl.Items.Count; i++)
             {
@@ -81,13 +78,11 @@ namespace DynaTestExplorerMaps.Views
                 }
             }
 
-            Debug.WriteLine("Found indexes: " + firstVisibleIndex + " " + lastVisibleIndex);
             for (int i = firstVisibleIndex; i <= lastVisibleIndex; i++)
             {
                 // Get the container for the image
                 if (imageControl.ItemContainerGenerator.ContainerFromIndex(i) is FrameworkElement container && IsElementInCenterView(container, scrollViewer))
                 {
-                    Debug.WriteLine("Found element in center");
                     // Check if this is the same element as last time
                     if (container == _lastElementInCenterView)
                     {
@@ -98,7 +93,6 @@ namespace DynaTestExplorerMaps.Views
                     ImageItem imageItem = (ImageItem)imageControl.Items[i];
                     if (imageItem != null)
                     {
-                        Debug.WriteLine("Found imageItem: " + imageItem.Id);
                         // Update the selection in the view model
                         ImageViewModel imageViewModel = DataContext as ImageViewModel;
                         _selectedImage = imageItem;
@@ -137,13 +131,12 @@ namespace DynaTestExplorerMaps.Views
 
         private void OnImageViewModelPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            Debug.WriteLine("ImageControl: Recieved PropertyChangedEvent from view model");
             if (e.PropertyName == nameof(ImageViewModel.SelectionId))
             {
-                Debug.WriteLine("PropertyChangedEvent args: " + e.PropertyName);
                 ImageViewModel imageViewModel = (ImageViewModel)sender;
-                SelectedImage = imageViewModel.GetImages().FirstOrDefault(image => image.Id == imageViewModel.SelectionId);
-                Debug.WriteLine("Found matching Image: " + SelectedImage.Id);
+                
+                //SelectedImage = imageViewModel.GetImages().FirstOrDefault(image => image.Id == imageViewModel.SelectionId);
+                SelectedImage = imageControl.Items.Cast<ImageItem>().FirstOrDefault(item => item.Id == imageViewModel.SelectionId);
             }
         }
     }

@@ -30,8 +30,10 @@ namespace DynaTestExplorerMaps
                 services.AddSingleton<MainWindow>();
                 services.AddTransient<MapViewModel>();
                 services.AddTransient<ImageViewModel>();
+                services.AddTransient<DataViewModel>();
                 services.AddTransient<MapControl>(sp => new MapControl(sp.GetService<MapViewModel>()));
                 services.AddTransient<ImageControl>(sp => new ImageControl(sp.GetService<ImageViewModel>()));
+                services.AddTransient<DataControl>(sp => new DataControl(sp.GetService<DataViewModel>()));
             }).Build();
 
             ServiceProvider = AppHost.Services;

@@ -14,5 +14,6 @@ namespace DynaTestExplorerMaps.Interfaces
         List<GpsPoint> GetInterpolatedImagePoints();
         List<ImageItem> GetImages();
         List<IriItem> GetIriItems();
+        List<IriSegment> GetIriSegments();
     }
 }

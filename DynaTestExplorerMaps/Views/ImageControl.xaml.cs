@@ -17,6 +17,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace DynaTestExplorerMaps.Views
 {
@@ -49,13 +50,34 @@ namespace DynaTestExplorerMaps.Views
                     _selectedImage = value;
                     if (_selectedImage != null)
                     {
-                        //find item from imageControl.items with same Id as _selectedImage
-
+                        // Find item from imageControl.items with same Id as _selectedImage
                         var container = imageControl.ItemContainerGenerator.ContainerFromIndex(_selectedImage.Id) as FrameworkElement;
                         if (container != null)
                         {
+                            // Detach the event handler before bringing the item into view
+                            scrollViewer.ScrollChanged -= ScrollViewer_ScrollChanged;
+
+                            // Bring the item into view if necessary
                             container.BringIntoView();
+
+                            // Get the position of the item relative to the ScrollViewer
+                            Rect bounds = container.TransformToAncestor(scrollViewer).TransformBounds(new Rect(0.0, 0.0, container.ActualWidth, container.ActualHeight));
+
+                            // Calculate the desired scroll offset to center the item
+                            double centerY = bounds.Top + bounds.Height / 2;
+                            double containerHeight = scrollViewer.ActualHeight;
+                            double offset = centerY - containerHeight / 2;
+
+                            // Scroll the ScrollViewer to center the item
+                            scrollViewer.ScrollToVerticalOffset(scrollViewer.VerticalOffset + offset);
+
+                            // Reattach the event handler and ignore pending scroll events
+                            Dispatcher.BeginInvoke(new Action(() =>
+                            {
+                                scrollViewer.ScrollChanged += ScrollViewer_ScrollChanged;
+                            }), DispatcherPriority.ApplicationIdle);
                         }
+                    
                     }
                 }
             }
@@ -63,6 +85,7 @@ namespace DynaTestExplorerMaps.Views
 
         private void ScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
+            Debug.WriteLine("Scroll changed");
             int firstVisibleIndex = -1;
             int lastVisibleIndex = -1;
             // Find the index of the first and last visible items

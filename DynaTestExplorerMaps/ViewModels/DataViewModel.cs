@@ -20,8 +20,8 @@ using OxyPlot.Wpf;
 using OxyPlot.Legends;
 using OxyPlot.Annotations;
 using OxyPlot.Utilities;
-
-
+using Windows.Security.Authentication.Web.Core;
+using Esri.ArcGISRuntime.Geometry;
 
 namespace DynaTestExplorerMaps.ViewModels
 {
@@ -34,6 +34,8 @@ namespace DynaTestExplorerMaps.ViewModels
 
         private PlotModel _scatterPlotModel;
         private Legend _legend;
+
+        private ScatterSeries pointerSeries;
 
         public ICommand DataValueSelectedCommand { get; set; }
 
@@ -48,11 +50,11 @@ namespace DynaTestExplorerMaps.ViewModels
 
             InitializeScatterPlotModel();
 
-            DataValueSelectedCommand = new RelayCommand<int>(HandleDataValueSelected);
+            DataValueSelectedCommand = new RelayCommand<OxyMouseDownEventArgs>(HandleScatterPlotClicked);
 
             WeakReferenceMessenger.Default.Register<SelectionChangedMessage>(this, (r, m) =>
             {
-                UpdateSelection(m.Value);
+                SelectionId = m.Value;
             });
         }
 
@@ -70,7 +72,7 @@ namespace DynaTestExplorerMaps.ViewModels
                 if (_selectionId != value)
                 {
                     _selectionId = value;
-                    OnPropertyChanged(nameof(SelectionId));
+                    UpdateTracker();
                 }
             }
         }
@@ -102,7 +104,7 @@ namespace DynaTestExplorerMaps.ViewModels
             xAxis.Minimum = _iriSegments.Min(s => s.DistanceRange.Item1) - 20;
             xAxis.Maximum = _iriSegments.Max(s => s.DistanceRange.Item1) + 20;
             yAxis.Minimum = _iriSegments.Min(s => (double)s.AverageIri) - 0.5;
-            yAxis.Maximum = _iriSegments.Max(s => (double)s.AverageIri) + 0.5;
+            yAxis.Maximum = _iriSegments.Max(s => (double)s.AverageIri) + 1.0;
             
 
             _scatterPlotModel = new PlotModel { Title = "IRI vs. Distance" };
@@ -112,8 +114,8 @@ namespace DynaTestExplorerMaps.ViewModels
             var series = new ScatterSeries
             {
                 MarkerType = MarkerType.Circle,
-                MarkerSize = 7,
-                MarkerFill = OxyColors.Blue,
+                MarkerSize = 6,
+                MarkerFill = OxyColors.Red,
                 MarkerStroke = OxyColors.Black,
                 MarkerStrokeThickness = 1,
                 ItemsSource = _iriSegments,
@@ -128,7 +130,7 @@ namespace DynaTestExplorerMaps.ViewModels
             {
                 StrokeThickness = 3,
                 InterpolationAlgorithm = InterpolationAlgorithms.CanonicalSpline,
-                Color = OxyColors.Red,
+                Color = OxyColors.DarkRed,
                 ItemsSource = _iriSegments,
                 DataFieldX = "DistanceRange.Item1",
                 DataFieldY = "AverageIri",
@@ -136,40 +138,91 @@ namespace DynaTestExplorerMaps.ViewModels
                 YAxisKey = "ValueAxis"
             };
 
-            //ScatterPoint point = new ScatterPoint(10, 1);
-            //point.Size = 7;
+            var markerSegment = new List<IriSegment>();
+            markerSegment.Add(_iriSegments[0]);
             
-            // Add point to the ScatterSeries
-            //series.Points.Add(point);
 
-            // Add the Legend to the PlotModel
+            pointerSeries = new ScatterSeries
+            {
+                MarkerType = MarkerType.Circle,
+                MarkerSize = 7,
+                MarkerFill = OxyColors.Blue,
+                MarkerStroke = OxyColors.Black,
+                MarkerStrokeThickness = 1,
+                ItemsSource = markerSegment,
+                DataFieldX = "DistanceRange.Item1",
+                DataFieldY = "AverageIri",
+                XAxisKey = "CategoryAxis",
+                YAxisKey = "ValueAxis",
+                Title = "Marker"
+            };
+
             _scatterPlotModel.Legends.Add(_legend);
 
             _scatterPlotModel.Series.Add(lineSeries);
             _scatterPlotModel.Series.Add(series);
+            _scatterPlotModel.Series.Add(pointerSeries);
 
             ScatterPlotModel = _scatterPlotModel;
         }
 
-        private void HandleDataValueSelected(int id)
+        private void HandleScatterPlotClicked(OxyMouseDownEventArgs e)
         {
-            UpdateSelection(id);
-            WeakReferenceMessenger.Default.Send(new SelectionChangedMessage(_selectionId));
+
+            // Transform the mouse position to data coordinates
+            var x = _scatterPlotModel.Axes[0].InverseTransform(e.Position.X);
+            var y = _scatterPlotModel.Axes[1].InverseTransform(e.Position.Y);
+
+            var maxX = _scatterPlotModel.Axes[0].Maximum;
+            var maxY = _scatterPlotModel.Axes[1].Maximum;
+
+            // Calculate the distance between the clicked point and each point in the list
+            var distances = _iriSegments.Select(segment => new { Segment = segment, Distance = Math.Sqrt(Math.Pow(segment.DistanceRange.Item1 - x, 2) + Math.Pow(segment.AverageIri.Value - y, 2)) });
+
+            // Find the segment with the smallest distance
+            var closestSegment = distances.OrderBy(d => d.Distance).FirstOrDefault()?.Segment;
+
+            if (closestSegment != null)
+            {
+                if ((closestSegment.DistanceRange.Item1 < x + (1.0 / 100.0 * maxX)) 
+                    && (closestSegment.DistanceRange.Item1 > x - (1.0 / 100.0 * maxX)) 
+                    && (closestSegment.AverageIri < y + (1.0 / 50.0 * maxY))
+                    && (closestSegment.AverageIri > y - (1.0 / 50.0 * maxY))) 
+                {
+                    HandleDataValueSelected(closestSegment.Id);
+                }
+            }
         }
 
-        private void UpdateSelection(int id)
+
+        private void HandleDataValueSelected(int segmentId)
         {
-            if (id == _selectionId)
+            if (!(_iriSegments[segmentId].Images.Contains(_selectionId)))
             {
-                return;
+                SelectionId = _iriSegments[segmentId].Images[0];
+                Debug.WriteLine("Selected " + _selectionId);
+                WeakReferenceMessenger.Default.Send(new SelectionChangedMessage(_iriSegments[segmentId].Images[0]));
+            }
+        }
+
+        private void UpdateTracker()
+        {
+            var markerSegment = new List<IriSegment>();
+            markerSegment.Add(_iriSegments.Where(s => s.Images.Contains(_selectionId)).FirstOrDefault());
+            
+            // Find all irisegment that contain the selectionId in Images and print their Ids
+            foreach (IriSegment segment in _iriSegments)
+            {
+                if (segment.Images.Contains(_selectionId)) 
+                {
+                    Debug.WriteLine("Segment " + segment.Id + " had image with id: " + _selectionId);
+                }
             }
 
-            SelectionId = id;
-        }
+            // Modify the ItemsSource property of the existing pointerSeries
+            pointerSeries.ItemsSource = markerSegment;
 
-        private void HighlightSelectedBar()
-        {
-            
+            _scatterPlotModel.InvalidatePlot(true);
         }
 
         public List<IriSegment> GetIriSegments()

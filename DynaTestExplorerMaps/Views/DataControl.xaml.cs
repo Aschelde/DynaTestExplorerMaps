@@ -36,7 +36,16 @@ namespace DynaTestExplorerMaps.Views
             InitializeComponent();
 
             dataViewModel.PropertyChanged += OnDataViewModelPropertyChanged;
-            ScatterPlotView.MouseDown += OnScatterPlotButtonDown;
+            ScatterPlotView.Model.MouseDown += OnScatterPlotButtonDown;
+        }
+
+        private void OnScatterPlotButtonDown(object? sender, OxyMouseDownEventArgs e)
+        {
+            if (e.ChangedButton == OxyMouseButton.Left)
+            {
+                var dataViewModel = (DataViewModel)this.DataContext;
+                dataViewModel.DataValueSelectedCommand.Execute(e);
+            }
         }
 
         private void LineSeries_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -59,13 +68,6 @@ namespace DynaTestExplorerMaps.Views
                 }
             }
         }
-
-        // Create OnScatterPlotButtonDown here
-        private void OnScatterPlotButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            
-        }
-
 
         private void OnDataViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {

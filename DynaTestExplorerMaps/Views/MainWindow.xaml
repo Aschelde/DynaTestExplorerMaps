@@ -10,7 +10,8 @@
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width = "*"/>
-            <ColumnDefinition Width="500"/>
+            <ColumnDefinition Width="248.78"/>
+            <ColumnDefinition Width="251.22"/>
         </Grid.ColumnDefinitions>
         <Grid>
             <Grid.ColumnDefinitions>
@@ -32,9 +33,9 @@
                 <ContentControl x:Name="dataContentControl"/>
             </Grid>
         </Grid>
-        <Grid Grid.Column="1" Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Grid Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2">
             <ContentControl x:Name="imageContentControl"/>
         </Grid>
     </Grid>
-     
+
 </Window>

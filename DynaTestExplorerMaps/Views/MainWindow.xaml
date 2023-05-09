@@ -24,8 +24,9 @@
                 <RowDefinition Height="300"/>
             </Grid.RowDefinitions>
 
-
-
+            <Grid Grid.Column="0" Grid.Row="0">
+                <ContentControl x:Name="optionsContentControl"/>
+            </Grid>
             <Grid Grid.Column="1" Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                 <ContentControl x:Name="mapContentControl"/>
             </Grid>
@@ -33,6 +34,7 @@
                 <ContentControl x:Name="dataContentControl"/>
             </Grid>
         </Grid>
+        
         <Grid Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2">
             <ContentControl x:Name="imageContentControl"/>
         </Grid>

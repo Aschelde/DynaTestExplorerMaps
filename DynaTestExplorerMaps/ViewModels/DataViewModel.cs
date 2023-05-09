@@ -27,8 +27,8 @@ namespace DynaTestExplorerMaps.ViewModels
 {
     public class DataViewModel: BaseViewModel
     {
-        private int _distancePerIri;
         private int _selectionId;
+        private bool _isInitialized;
         private List<IriSegment> _iriSegments;
         private IDataAccessLayer _dataAccessLayer;
 
@@ -36,19 +36,20 @@ namespace DynaTestExplorerMaps.ViewModels
         private Legend _legend;
 
         private ScatterSeries pointerSeries;
+        private ScatterSeries dataSeries;
+        private LineSeries lineSeries;
 
         public ICommand DataValueSelectedCommand { get; set; }
 
         public DataViewModel()
         {
-            _distancePerIri = 15;
-
             _selectionId = 0;
+            _isInitialized = false;
 
             _dataAccessLayer = App.AppHost.Services.GetRequiredService<IDataAccessLayer>();
             _iriSegments = _dataAccessLayer.GetIriSegments();
 
-            InitializeScatterPlotModel();
+            UpdateScatterPlotModel();
 
             DataValueSelectedCommand = new RelayCommand<OxyMouseDownEventArgs>(HandleScatterPlotClicked);
 
@@ -56,6 +57,15 @@ namespace DynaTestExplorerMaps.ViewModels
             {
                 SelectionId = m.Value;
             });
+
+            _dataAccessLayer.PropertyChanged += _dataAccessLayer_PropertyChanged;
+        }
+
+        private void _dataAccessLayer_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            Debug.WriteLine("DataAccesLayer PropertyChanged");
+            _iriSegments = _dataAccessLayer.GetIriSegments();
+            UpdateScatterPlotModel();
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -90,80 +100,90 @@ namespace DynaTestExplorerMaps.ViewModels
             }
         }
 
-        private void InitializeScatterPlotModel()
+        private void UpdateScatterPlotModel()
         {
-
-            _legend = new Legend();
-
-            // Set the Legend's position
-            _legend.LegendPosition = LegendPosition.TopLeft;
-
-            var xAxis = new LinearAxis { Position = AxisPosition.Bottom, Title = "Distance", Key = "CategoryAxis" };
-            var yAxis = new LinearAxis { Position = AxisPosition.Left, Title = "Average IRI", Key = "ValueAxis" };
-
-            xAxis.Minimum = _iriSegments.Min(s => s.DistanceRange.Item1) - 20;
-            xAxis.Maximum = _iriSegments.Max(s => s.DistanceRange.Item1) + 20;
-            yAxis.Minimum = _iriSegments.Min(s => (double)s.AverageIri) - 0.5;
-            yAxis.Maximum = _iriSegments.Max(s => (double)s.AverageIri) + 1.0;
-            
-
-            _scatterPlotModel = new PlotModel { Title = "IRI vs. Distance" };
-            _scatterPlotModel.Axes.Add(xAxis);
-            _scatterPlotModel.Axes.Add(yAxis);
-
-            var series = new ScatterSeries
+            if (!_isInitialized)
             {
-                MarkerType = MarkerType.Circle,
-                MarkerSize = 6,
-                MarkerFill = OxyColors.Red,
-                MarkerStroke = OxyColors.Black,
-                MarkerStrokeThickness = 1,
-                ItemsSource = _iriSegments,
-                DataFieldX = "DistanceRange.Item1",
-                DataFieldY = "AverageIri",
-                XAxisKey = "CategoryAxis",
-                YAxisKey = "ValueAxis",
-                Title = "IRI"
-            };
+                _legend = new Legend();
 
-            var lineSeries = new LineSeries
+                // Set the Legend's position
+                _legend.LegendPosition = LegendPosition.TopLeft;
+
+                var xAxis = new LinearAxis { Position = AxisPosition.Bottom, Title = "Distance", Key = "CategoryAxis" };
+                var yAxis = new LinearAxis { Position = AxisPosition.Left, Title = "Average IRI", Key = "ValueAxis" };
+
+                xAxis.Minimum = _iriSegments.Min(s => s.DistanceRange.Item1) - 20;
+                xAxis.Maximum = _iriSegments.Max(s => s.DistanceRange.Item1) + 20;
+                yAxis.Minimum = _iriSegments.Min(s => (double)s.AverageIri) - 0.5;
+                yAxis.Maximum = _iriSegments.Max(s => (double)s.AverageIri) + 1.0;
+
+
+                _scatterPlotModel = new PlotModel { Title = "IRI vs. Distance" };
+                _scatterPlotModel.Axes.Add(xAxis);
+                _scatterPlotModel.Axes.Add(yAxis);
+
+                dataSeries = new ScatterSeries
+                {
+                    MarkerType = MarkerType.Circle,
+                    MarkerSize = 6,
+                    MarkerFill = OxyColors.Red,
+                    MarkerStroke = OxyColors.Black,
+                    MarkerStrokeThickness = 1,
+                    ItemsSource = _iriSegments,
+                    DataFieldX = "DistanceRange.Item1",
+                    DataFieldY = "AverageIri",
+                    XAxisKey = "CategoryAxis",
+                    YAxisKey = "ValueAxis",
+                    Title = "IRI"
+                };
+
+                lineSeries = new LineSeries
+                {
+                    StrokeThickness = 3,
+                    InterpolationAlgorithm = InterpolationAlgorithms.CanonicalSpline,
+                    Color = OxyColors.DarkRed,
+                    ItemsSource = _iriSegments,
+                    DataFieldX = "DistanceRange.Item1",
+                    DataFieldY = "AverageIri",
+                    XAxisKey = "CategoryAxis",
+                    YAxisKey = "ValueAxis"
+                };
+
+                var markerSegment = new List<IriSegment>();
+                markerSegment.Add(_iriSegments[0]);
+
+
+                pointerSeries = new ScatterSeries
+                {
+                    MarkerType = MarkerType.Circle,
+                    MarkerSize = 7,
+                    MarkerFill = OxyColors.Blue,
+                    MarkerStroke = OxyColors.Black,
+                    MarkerStrokeThickness = 1,
+                    ItemsSource = markerSegment,
+                    DataFieldX = "DistanceRange.Item1",
+                    DataFieldY = "AverageIri",
+                    XAxisKey = "CategoryAxis",
+                    YAxisKey = "ValueAxis",
+                    Title = "Marker"
+                };
+
+                _scatterPlotModel.Legends.Add(_legend);
+
+                _scatterPlotModel.Series.Add(lineSeries);
+                _scatterPlotModel.Series.Add(dataSeries);
+                _scatterPlotModel.Series.Add(pointerSeries);
+
+                ScatterPlotModel = _scatterPlotModel;
+
+                _isInitialized = true;
+
+            } else
             {
-                StrokeThickness = 3,
-                InterpolationAlgorithm = InterpolationAlgorithms.CanonicalSpline,
-                Color = OxyColors.DarkRed,
-                ItemsSource = _iriSegments,
-                DataFieldX = "DistanceRange.Item1",
-                DataFieldY = "AverageIri",
-                XAxisKey = "CategoryAxis",
-                YAxisKey = "ValueAxis"
-            };
-
-            var markerSegment = new List<IriSegment>();
-            markerSegment.Add(_iriSegments[0]);
-            
-
-            pointerSeries = new ScatterSeries
-            {
-                MarkerType = MarkerType.Circle,
-                MarkerSize = 7,
-                MarkerFill = OxyColors.Blue,
-                MarkerStroke = OxyColors.Black,
-                MarkerStrokeThickness = 1,
-                ItemsSource = markerSegment,
-                DataFieldX = "DistanceRange.Item1",
-                DataFieldY = "AverageIri",
-                XAxisKey = "CategoryAxis",
-                YAxisKey = "ValueAxis",
-                Title = "Marker"
-            };
-
-            _scatterPlotModel.Legends.Add(_legend);
-
-            _scatterPlotModel.Series.Add(lineSeries);
-            _scatterPlotModel.Series.Add(series);
-            _scatterPlotModel.Series.Add(pointerSeries);
-
-            ScatterPlotModel = _scatterPlotModel;
+                dataSeries.ItemsSource = _iriSegments;
+                lineSeries.ItemsSource = _iriSegments;
+                UpdateTracker();
+            }
         }
 
         private void HandleScatterPlotClicked(OxyMouseDownEventArgs e)
@@ -210,15 +230,6 @@ namespace DynaTestExplorerMaps.ViewModels
             var markerSegment = new List<IriSegment>();
             markerSegment.Add(_iriSegments.Where(s => s.Images.Contains(_selectionId)).FirstOrDefault());
             
-            // Find all irisegment that contain the selectionId in Images and print their Ids
-            foreach (IriSegment segment in _iriSegments)
-            {
-                if (segment.Images.Contains(_selectionId)) 
-                {
-                    Debug.WriteLine("Segment " + segment.Id + " had image with id: " + _selectionId);
-                }
-            }
-
             // Modify the ItemsSource property of the existing pointerSeries
             pointerSeries.ItemsSource = markerSegment;
 

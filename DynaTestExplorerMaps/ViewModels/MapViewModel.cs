@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -146,7 +147,7 @@ namespace DynaTestExplorerMaps.ViewModels
             var pointSymbol = new SimpleMarkerSymbol
             {
                 Style = SimpleMarkerSymbolStyle.Circle,
-                Color = System.Drawing.Color.Orange,
+                Color = System.Drawing.Color.LightBlue,
                 Size = 5.0
             };
 
@@ -179,7 +180,7 @@ namespace DynaTestExplorerMaps.ViewModels
             var lineSymbol = new SimpleLineSymbol
             {
                 Style = SimpleLineSymbolStyle.Solid,
-                Color = System.Drawing.Color.Red,
+                Color = System.Drawing.Color.DarkBlue,
                 Width = 2.0
             };
 
@@ -201,7 +202,7 @@ namespace DynaTestExplorerMaps.ViewModels
                 var pointSymbol = new SimpleMarkerSymbol
                 {
                     Style = SimpleMarkerSymbolStyle.Circle,
-                    Color = System.Drawing.Color.Orange,
+                    Color = System.Drawing.Color.LightBlue,
                     Size = 5.0
                 };
                 pointSymbol.Outline = new SimpleLineSymbol
@@ -214,26 +215,46 @@ namespace DynaTestExplorerMaps.ViewModels
             }
 
             GpsPoint? point = points.Find(GpsPoint => GpsPoint.Id == Id);
+            GpsPoint? nextPoint = points.Find(GpsPoint => GpsPoint.Id == Id + 1);
+
+            double angle = 0;
+            //Calculate the angle between the two points
+            if (nextPoint != null)
+            {
+                angle = Math.Atan2(nextPoint.Latitude - point.Latitude, nextPoint.Longitude - point.Longitude) * 180 / Math.PI;
+            } else
+            {
+                // Use angle from current to last point
+                GpsPoint? lastPoint = points.Find(GpsPoint => GpsPoint.Id == Id - 1);
+                if (lastPoint != null)
+                {
+                    angle = Math.Atan2(lastPoint.Latitude - point.Latitude, lastPoint.Longitude - point.Longitude) * 180 / Math.PI;
+                }
+            }
 
             // Find the existing graphic for the new GPS point for the selected ID in the _gpsPointsGraphicsOverlay.
             Graphic newGraphic = _gpsPointsGraphicsOverlay.Graphics.FirstOrDefault(g => _pointGraphicToGpsPointMap[g] == point);
 
             if (newGraphic != null && _pointGraphicToGpsPointMap[selectedGraphic].Id == _selectionId)
             {
+                var pictureMarkerSymbol = new PictureMarkerSymbol(new Uri("C:\\Users\\Asger\\source\\repos\\DynaTestExplorerMaps\\DynaTestExplorerMaps\\car.png"));
+
+                pictureMarkerSymbol.Angle = -angle;
+
                 // Update the existing graphic for the new GPS point with a different symbol.
                 var pointSymbol = new SimpleMarkerSymbol
                 {
                     Style = SimpleMarkerSymbolStyle.Circle,
-                    Color = System.Drawing.Color.Green,
+                    Color = System.Drawing.Color.Red,
                     Size = 12.0
                 };
                 pointSymbol.Outline = new SimpleLineSymbol
                 {
                     Style = SimpleLineSymbolStyle.Solid,
-                    Color = System.Drawing.Color.DarkGreen,
+                    Color = System.Drawing.Color.DarkRed,
                     Width = 3.0
                 };
-                newGraphic.Symbol = pointSymbol;
+                newGraphic.Symbol = pictureMarkerSymbol;
             }
         }
 

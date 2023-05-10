@@ -126,8 +126,8 @@ namespace DynaTestExplorerMaps.ViewModels
                 {
                     MarkerType = MarkerType.Circle,
                     MarkerSize = 6,
-                    MarkerFill = OxyColors.Red,
-                    MarkerStroke = OxyColors.Black,
+                    MarkerFill = OxyColors.LightBlue,
+                    MarkerStroke = OxyColors.Blue,
                     MarkerStrokeThickness = 1,
                     ItemsSource = _iriSegments,
                     DataFieldX = "DistanceRange.Item1",
@@ -141,7 +141,7 @@ namespace DynaTestExplorerMaps.ViewModels
                 {
                     StrokeThickness = 3,
                     InterpolationAlgorithm = InterpolationAlgorithms.CanonicalSpline,
-                    Color = OxyColors.DarkRed,
+                    Color = OxyColors.DarkBlue,
                     ItemsSource = _iriSegments,
                     DataFieldX = "DistanceRange.Item1",
                     DataFieldY = "AverageIri",
@@ -157,8 +157,8 @@ namespace DynaTestExplorerMaps.ViewModels
                 {
                     MarkerType = MarkerType.Circle,
                     MarkerSize = 7,
-                    MarkerFill = OxyColors.Blue,
-                    MarkerStroke = OxyColors.Black,
+                    MarkerFill = OxyColors.Red,
+                    MarkerStroke = OxyColors.DarkRed,
                     MarkerStrokeThickness = 1,
                     ItemsSource = markerSegment,
                     DataFieldX = "DistanceRange.Item1",
@@ -182,6 +182,7 @@ namespace DynaTestExplorerMaps.ViewModels
             {
                 dataSeries.ItemsSource = _iriSegments;
                 lineSeries.ItemsSource = _iriSegments;
+
                 UpdateTracker();
             }
         }

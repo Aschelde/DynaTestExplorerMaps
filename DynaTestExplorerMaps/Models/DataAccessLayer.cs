@@ -27,7 +27,7 @@ namespace DynaTestExplorerMaps.Models
         private List<IriItem> _iriItems;
         private List<IriSegment> _segments;
 
-        public DataAccessLayer(int surveyId)
+        public DataAccessLayer(int surveyId = 0)
         {
             currentSurveyId = surveyId;
             _distancePerSegment = 10;

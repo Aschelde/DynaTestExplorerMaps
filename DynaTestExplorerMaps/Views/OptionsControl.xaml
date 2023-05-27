@@ -9,8 +9,8 @@
     
     <StackPanel Orientation="Vertical">
         <TextBlock Text="Distance of mean measurement:"/>
-        <Slider x:Name="slider" Minimum="{Binding MinMeasurementIntervalDistance}" Maximum="{Binding MaxMeasurementIntervalDistance}" TickFrequency="1" ValueChanged="Slider_ValueChanged"/>
-        <TextBlock x:Name="SliderValueText" Text="{Binding MinMeasurementIntervalDistance}"/>
+        <Slider x:Name="slider" Minimum="{Binding MinMeasurementIntervalDistance}" Maximum="{Binding MaxMeasurementIntervalDistance}" TickFrequency="1" Value="15" ValueChanged="Slider_ValueChanged"/>
+        <TextBlock x:Name="SliderValueText" Text="15"/>
         
         <TextBlock Text="Measurements:"/>
         <StackPanel>

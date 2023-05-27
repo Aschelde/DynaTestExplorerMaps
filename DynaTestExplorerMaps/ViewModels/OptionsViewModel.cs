@@ -26,7 +26,7 @@ namespace DynaTestExplorerMaps.ViewModels
         {
             _dataAccessLayer = App.AppHost.Services.GetRequiredService<IDataAccessLayer>();
             getMaxMinMeasurementInterval();
-            _currentMeasurementInterval = _minMeasurementIntervalDistance;
+            _currentMeasurementInterval = 10;
             MeasurementIntervalChangedCommand = new RelayCommand<int>(HandleMeasurementIntervalChanged);
         }
 

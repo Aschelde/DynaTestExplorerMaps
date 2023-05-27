@@ -32,8 +32,11 @@ namespace DynaTestExplorerMaps.Views
 
         private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            _optionsViewModel.MeasurementIntervalChangedCommand.Execute((int)Math.Round(e.NewValue));
-            SliderValueText.Text = "" + Math.Round(e.NewValue);
+            if (_optionsViewModel != null)
+            {
+                _optionsViewModel.MeasurementIntervalChangedCommand?.Execute((int)Math.Round(e.NewValue));
+                SliderValueText.Text = "" + Math.Round(e.NewValue);
+            }
         }
     }
 }

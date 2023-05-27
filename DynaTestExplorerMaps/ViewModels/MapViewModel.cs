@@ -237,7 +237,7 @@ namespace DynaTestExplorerMaps.ViewModels
 
             if (newGraphic != null && _pointGraphicToGpsPointMap[selectedGraphic].Id == _selectionId)
             {
-                var pictureMarkerSymbol = new PictureMarkerSymbol(new Uri("C:\\Users\\Asger\\source\\repos\\DynaTestExplorerMaps\\DynaTestExplorerMaps\\car.png"));
+                var pictureMarkerSymbol = new PictureMarkerSymbol(new Uri("pack://application:,,,/Graphics/arrow.png"));
 
                 pictureMarkerSymbol.Angle = -angle;
 

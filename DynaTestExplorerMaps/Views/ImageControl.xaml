@@ -7,14 +7,18 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
 
-    <UserControl.Resources>
-        <Style x:Key="TopImage" TargetType="Image">
-            <Setter Property="Margin" Value="0,100,0,0"/>
-        </Style>
-    </UserControl.Resources>
-
     <Grid>
-        <Grid Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <!--Row for the banner-->
+            <RowDefinition Height="*" />
+            <!--Row for the scrollviewer-->
+        </Grid.RowDefinitions>
+
+        <Image Grid.Row="0" Source="../Graphics/direction_of_travel_banner.png" Stretch="UniformToFill"/>
+        <!--Banner-->
+
+        <Grid Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <ScrollViewer Name="scrollViewer">
                 <ItemsControl Name="imageControl" ScrollViewer.CanContentScroll="True">
                     <ItemsControl.ItemsPanel>

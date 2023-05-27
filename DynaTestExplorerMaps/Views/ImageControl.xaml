@@ -40,6 +40,11 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </ScrollViewer>
+
+            <!--Overlay-->
+            <Grid Background="Transparent" IsHitTestVisible="False">
+                <Rectangle Height="1" Fill="Red" VerticalAlignment="Center"/>
+            </Grid>
         </Grid>
     </Grid>
 </UserControl>

@@ -1,5 +1,6 @@
 ﻿using DynaTestExplorerMaps.Models;
 using DynaTestExplorerMaps.ViewModels;
+using DynaTestExplorerMaps.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -27,7 +28,7 @@ namespace DynaTestExplorerMaps.Views
         private ImageItem _selectedImage;
         private int _lastImageId;
 
-        public ImageControl(ImageViewModel imageViewModel)
+        public ImageControl(IImageViewModel imageViewModel)
         {
             InitializeComponent();
             var images = imageViewModel.GetImages();
@@ -119,7 +120,7 @@ namespace DynaTestExplorerMaps.Views
                         // Update the selection in the view model
                         ImageViewModel imageViewModel = DataContext as ImageViewModel;
                         _selectedImage = imageItem;
-                        imageViewModel.ImageControlScrolledCommand.Execute(imageItem.Id);
+                        imageViewModel.HandleImageControlScrolled(imageItem.Id);
                     }
                     break;
                 }
@@ -154,11 +155,9 @@ namespace DynaTestExplorerMaps.Views
 
         private void OnImageViewModelPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(ImageViewModel.SelectionId))
+            if (e.PropertyName == nameof(IImageViewModel.SelectionId))
             {
-                ImageViewModel imageViewModel = (ImageViewModel)sender;
-                
-                //SelectedImage = imageViewModel.GetImages().FirstOrDefault(image => image.Id == imageViewModel.SelectionId);
+                IImageViewModel imageViewModel = (IImageViewModel)sender;
                 SelectedImage = imageControl.Items.Cast<ImageItem>().FirstOrDefault(item => item.Id == imageViewModel.SelectionId);
             }
         }

@@ -8,6 +8,6 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-        <oxy:PlotView x:Name="ScatterPlotView" Model="{Binding ScatterPlotModel}"/>
+        <oxy:PlotView x:Name="ScatterPlotView" Model="{Binding PlotModel}"/>
     </Grid>
 </UserControl>

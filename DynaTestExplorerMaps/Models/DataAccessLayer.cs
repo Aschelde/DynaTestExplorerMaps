@@ -13,6 +13,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using DynaTestExplorerMaps.Messages;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DynaTestExplorerMaps.Models
 {
@@ -27,7 +28,9 @@ namespace DynaTestExplorerMaps.Models
         private List<IriItem> _iriItems;
         private List<IriSegment> _segments;
 
-        public DataAccessLayer(int surveyId = 0)
+        IImageLoader _imageLoader;
+
+        public DataAccessLayer(IImageLoader imageLoader, int surveyId)
         {
             currentSurveyId = surveyId;
             _distancePerSegment = 10;
@@ -43,6 +46,8 @@ namespace DynaTestExplorerMaps.Models
 
                 OnPropertyChanged();
             });
+
+            this._imageLoader = imageLoader;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -157,7 +162,6 @@ namespace DynaTestExplorerMaps.Models
         public List<ImageItem> GetImages()
         {
             var images = new List<ImageItem>();
-            ImageLoader imageLoader = new ImageLoader();
 
             using (var conn = new NpgsqlConnection(connectionString))
             {
@@ -172,7 +176,7 @@ namespace DynaTestExplorerMaps.Models
                             var imageItem = new ImageItem
                             {
                                 Id = reader.GetInt32(reader.GetOrdinal("section_id")),
-                                Image = imageLoader.GetImage(reader.GetString(reader.GetOrdinal("image_path")))
+                                Image = _imageLoader.GetImage(reader.GetString(reader.GetOrdinal("image_path")))
                             };
 
                             images.Add(imageItem);

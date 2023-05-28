@@ -1,4 +1,5 @@
-﻿using DynaTestExplorerMaps.Models;
+﻿using DynaTestExplorerMaps.Interfaces;
+using DynaTestExplorerMaps.Models;
 using DynaTestExplorerMaps.ViewModels;
 using OxyPlot;
 using OxyPlot.Axes;
@@ -29,31 +30,25 @@ namespace DynaTestExplorerMaps.Views
     public partial class DataControl : UserControl
     {
         private int _selectionId;
-        public DataControl(DataViewModel dataViewModel)
+        public DataControl(IDataViewModel dataViewModel)
         {
             this.DataContext = dataViewModel;
 
             InitializeComponent();
 
             dataViewModel.PropertyChanged += OnDataViewModelPropertyChanged;
-            ScatterPlotView.Model.MouseDown += OnScatterPlotButtonDown;
+
+            // To access the Model property, you need to cast the ScatterPlotModel to PlotModel.
+            var plotModel = (PlotModel)dataViewModel.PlotModel;
+            plotModel.MouseDown += OnScatterPlotButtonDown;
         }
 
         private void OnScatterPlotButtonDown(object? sender, OxyMouseDownEventArgs e)
         {
             if (e.ChangedButton == OxyMouseButton.Left)
             {
-                var dataViewModel = (DataViewModel)this.DataContext;
-                dataViewModel.DataValueSelectedCommand.Execute(e);
-            }
-        }
-
-        private void LineSeries_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (e.AddedItems.Count > 0)
-            {
-                var selectedSegment = e.AddedItems[0] as IriSegment;
-                // Do something with the selected segment, such as setting a highlight color
+                var dataViewModel = (IDataViewModel)this.DataContext;
+                dataViewModel.HandlePlotClicked(e.Position.X, e.Position.Y);
             }
         }
 
@@ -71,9 +66,9 @@ namespace DynaTestExplorerMaps.Views
 
         private void OnDataViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(DataViewModel.SelectionId))
+            if (e.PropertyName == nameof(IDataViewModel.SelectionId))
             {
-                DataViewModel dataViewModel = (DataViewModel)sender;
+                IDataViewModel dataViewModel = (IDataViewModel)sender;
                 SelectionId = dataViewModel.SelectionId;
             }
         }

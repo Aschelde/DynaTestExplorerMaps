@@ -14,20 +14,18 @@ using System.Windows.Navigation;
 
 namespace DynaTestExplorerMaps.ViewModels
 {
-    public class OptionsViewModel
+    public class OptionsViewModel : BaseViewModel, IOptionsViewModel
     {
         private readonly IDataAccessLayer _dataAccessLayer;
         private int _currentMeasurementInterval;
         private int _maxMeasurementIntervalDistance;
         private int _minMeasurementIntervalDistance;
 
-        public ICommand MeasurementIntervalChangedCommand { get; set; }
-        public OptionsViewModel()
+        public OptionsViewModel(IDataAccessLayer dataAccessLayer)
         {
-            _dataAccessLayer = App.AppHost.Services.GetRequiredService<IDataAccessLayer>();
+            _dataAccessLayer = dataAccessLayer;
             getMaxMinMeasurementInterval();
             _currentMeasurementInterval = 10;
-            MeasurementIntervalChangedCommand = new RelayCommand<int>(HandleMeasurementIntervalChanged);
         }
 
         public int MaxMeasurementIntervalDistance
@@ -40,7 +38,7 @@ namespace DynaTestExplorerMaps.ViewModels
             get { return _minMeasurementIntervalDistance;}
         }
 
-        private void HandleMeasurementIntervalChanged(int intervalDistance)
+        public void HandleMeasurementIntervalChanged(int intervalDistance)
         {
             _currentMeasurementInterval = intervalDistance;
             WeakReferenceMessenger.Default.Send(new MeasurementIntervalChangedMessage(intervalDistance));

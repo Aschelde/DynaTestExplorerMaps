@@ -17,19 +17,16 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace DynaTestExplorerMaps.ViewModels
 {
-    public class ImageViewModel: BaseViewModel
+    public class ImageViewModel: BaseViewModel, IImageViewModel
     {
         private readonly IDataAccessLayer _dataAccessLayer;
         private int _selectionId;
-        public ICommand ImageControlScrolledCommand { get; set; }
 
         public ImageViewModel()
         {
             _dataAccessLayer = App.AppHost.Services.GetRequiredService<IDataAccessLayer>();
 
             _selectionId = 0;
-
-            ImageControlScrolledCommand = new RelayCommand<int>(HandleImageControlScrolled);
 
             WeakReferenceMessenger.Default.Register<SelectionChangedMessage>(this, (r, m) =>
             {
@@ -57,7 +54,7 @@ namespace DynaTestExplorerMaps.ViewModels
             }
         }
 
-        private void HandleImageControlScrolled(int id)
+        public void HandleImageControlScrolled(int id)
         {
             _selectionId = id;
             //send selection changed message

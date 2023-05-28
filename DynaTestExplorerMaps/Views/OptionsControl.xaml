@@ -14,8 +14,8 @@
         
         <TextBlock Text="Measurements:"/>
         <StackPanel>
-            <RadioButton Content="IRI" GroupName="MeasurementType"/>
-            <RadioButton Content="DMI" GroupName="MeasurementType"/>
+            <RadioButton Content="IRI" GroupName="MeasurementType" IsChecked="True"/>
+            <RadioButton Content="PCI" GroupName="MeasurementType"/>
         </StackPanel>
     </StackPanel>
 </UserControl>

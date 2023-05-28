@@ -25,21 +25,20 @@ using Esri.ArcGISRuntime.Geometry;
 
 namespace DynaTestExplorerMaps.ViewModels
 {
-    public class DataViewModel: BaseViewModel
+    public class DataViewModel: BaseViewModel, IDataViewModel
     {
         private int _selectionId;
         private bool _isInitialized;
         private List<IriSegment> _iriSegments;
         private IDataAccessLayer _dataAccessLayer;
 
-        private PlotModel _scatterPlotModel;
+        private object _scatterPlotModel;
         private Legend _legend;
 
         private ScatterSeries pointerSeries;
         private ScatterSeries dataSeries;
         private LineSeries lineSeries;
 
-        public ICommand DataValueSelectedCommand { get; set; }
 
         public DataViewModel()
         {
@@ -50,8 +49,6 @@ namespace DynaTestExplorerMaps.ViewModels
             _iriSegments = _dataAccessLayer.GetIriSegments();
 
             UpdateScatterPlotModel();
-
-            DataValueSelectedCommand = new RelayCommand<OxyMouseDownEventArgs>(HandleScatterPlotClicked);
 
             WeakReferenceMessenger.Default.Register<SelectionChangedMessage>(this, (r, m) =>
             {
@@ -87,7 +84,7 @@ namespace DynaTestExplorerMaps.ViewModels
             }
         }
 
-        public PlotModel ScatterPlotModel
+        public object PlotModel
         {
             get { return _scatterPlotModel; }
             set
@@ -95,7 +92,7 @@ namespace DynaTestExplorerMaps.ViewModels
                 if (_scatterPlotModel != value)
                 {
                     _scatterPlotModel = value;
-                    OnPropertyChanged(nameof(ScatterPlotModel));
+                    OnPropertyChanged(nameof(PlotModel));
                 }
             }
         }
@@ -117,10 +114,10 @@ namespace DynaTestExplorerMaps.ViewModels
                 yAxis.Minimum = _iriSegments.Min(s => (double)s.AverageIri) - 0.5;
                 yAxis.Maximum = _iriSegments.Max(s => (double)s.AverageIri) + 1.0;
 
-
-                _scatterPlotModel = new PlotModel { Title = "IRI vs. Distance" };
-                _scatterPlotModel.Axes.Add(xAxis);
-                _scatterPlotModel.Axes.Add(yAxis);
+                PlotModel model;
+                model = new PlotModel { Title = "IRI vs. Distance" };
+                model.Axes.Add(xAxis);
+                model.Axes.Add(yAxis);
 
                 dataSeries = new ScatterSeries
                 {
@@ -168,13 +165,13 @@ namespace DynaTestExplorerMaps.ViewModels
                     Title = "Marker"
                 };
 
-                _scatterPlotModel.Legends.Add(_legend);
+                model.Legends.Add(_legend);
 
-                _scatterPlotModel.Series.Add(lineSeries);
-                _scatterPlotModel.Series.Add(dataSeries);
-                _scatterPlotModel.Series.Add(pointerSeries);
+                model.Series.Add(lineSeries);
+                model.Series.Add(dataSeries);
+                model.Series.Add(pointerSeries);
 
-                ScatterPlotModel = _scatterPlotModel;
+                PlotModel = model;
 
                 _isInitialized = true;
 
@@ -187,15 +184,15 @@ namespace DynaTestExplorerMaps.ViewModels
             }
         }
 
-        private void HandleScatterPlotClicked(OxyMouseDownEventArgs e)
+        public void HandlePlotClicked(double posX, double posY)
         {
-
+            var scatterPlotModel = PlotModel as PlotModel;
             // Transform the mouse position to data coordinates
-            var x = _scatterPlotModel.Axes[0].InverseTransform(e.Position.X);
-            var y = _scatterPlotModel.Axes[1].InverseTransform(e.Position.Y);
+            var x = scatterPlotModel.Axes[0].InverseTransform(posX);
+            var y = scatterPlotModel.Axes[1].InverseTransform(posY);
 
-            var maxX = _scatterPlotModel.Axes[0].Maximum;
-            var maxY = _scatterPlotModel.Axes[1].Maximum;
+            var maxX = scatterPlotModel.Axes[0].Maximum;
+            var maxY = scatterPlotModel.Axes[1].Maximum;
 
             // Calculate the distance between the clicked point and each point in the list
             var distances = _iriSegments.Select(segment => new { Segment = segment, Distance = Math.Sqrt(Math.Pow(segment.DistanceRange.Item1 - x, 2) + Math.Pow(segment.AverageIri.Value - y, 2)) });
@@ -234,10 +231,11 @@ namespace DynaTestExplorerMaps.ViewModels
             // Modify the ItemsSource property of the existing pointerSeries
             pointerSeries.ItemsSource = markerSegment;
 
-            _scatterPlotModel.InvalidatePlot(true);
+            var scatterPlotModel = PlotModel as PlotModel;
+            scatterPlotModel.InvalidatePlot(true);
         }
 
-        public List<IriSegment> GetIriSegments()
+        private List<IriSegment> GetIriSegments()
         {
             if (_iriSegments != null)
             {
@@ -248,77 +246,5 @@ namespace DynaTestExplorerMaps.ViewModels
 
             return _iriSegments;
         }   
-
-        /*public Dictionary<List<int>, IriItem> GetAverageIriDataByImage()
-        {
-            Dictionary<int, IriItem> iriByImage = GetIriDataByImage();
-            Dictionary <List<int>, IriItem > averageIri = new Dictionary<List<int>, IriItem>();
-
-            var groupedByDistance = iriByImage.GroupBy(item => (int)Math.Floor(item.Value.Distance / _distancePerIri));
-
-            float currentAverageIri;
-            foreach (var group in groupedByDistance)
-            {
-                currentAverageIri = group.Average(item => item.Value.Iri);
-                var imageIds = group.Select(item => item.Key).ToList();
-                var iriItem = new IriItem();
-                iriItem.Id = group.Key;
-                iriItem.Iri = currentAverageIri;
-                iriItem.Distance = group.Min(item => item.Value.Distance);
-                averageIri[imageIds] = iriItem;
-            }
-
-            return averageIri;
-        }
-
-        public Dictionary<int, IriItem> GetIriDataByImage()
-        {
-            var iriItems = _dataAccessLayer.GetIriItems();
-            var gpsPoints = _dataAccessLayer.GetInterpolatedImagePoints();
-
-            Dictionary<int, IriItem> result = new Dictionary<int, IriItem>();
-
-            int gpsIndex = 0;
-            for (int i = 0; i < iriItems.Count; i++)
-            {
-                // If the IriItem is before the first GPS point, associate it with the first GPS point
-                if (gpsIndex == 0 && iriItems[i].Distance < gpsPoints[0].Distance)
-                {
-                    result[gpsPoints[0].Id] = iriItems[i];
-                    continue;
-                }
-
-                // If the IriItem is after the last GPS point, associate it with the last GPS point
-                if (gpsIndex == gpsPoints.Count - 1 && iriItems[i].Distance >= gpsPoints[gpsIndex].Distance)
-                {
-                    result[gpsPoints[gpsIndex].Id] = iriItems[i];
-                    continue;
-                }
-
-                // Find the closest GPS point for this IriItem using binary search
-                int low = gpsIndex;
-                int high = gpsPoints.Count - 1;
-                while (low < high)
-                {
-                    int mid = (low + high + 1) / 2;
-                    if (gpsPoints[mid].Distance <= iriItems[i].Distance)
-                    {
-                        low = mid;
-                    }
-                    else
-                    {
-                        high = mid - 1;
-                    }
-                }
-
-                // Associate the IriItem with the GPS point that comes immediately before it
-                result[gpsPoints[low].Id] = iriItems[i];
-
-                // Update the GPS index to start the next search at the current point
-                gpsIndex = low;
-            }
-
-            return result;
-        }*/
     }
 }

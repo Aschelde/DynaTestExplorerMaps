@@ -7,10 +7,11 @@ using System.IO;
 using System.Windows.Media.Imaging;
 using System.Windows.Xps;
 using System.Diagnostics;
+using DynaTestExplorerMaps.Interfaces;
 
 namespace DynaTestExplorerMaps.Models
 {
-    class ImageLoader
+    public class ImageLoader : IImageLoader
     {
         public BitmapImage GetImage(string path)
         {
@@ -28,14 +29,12 @@ namespace DynaTestExplorerMaps.Models
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;
                 bitmap.EndInit();
                 return bitmap;
-                
+
             }
             catch (Exception ex)
             {
                 throw new Exception("Error reading image file.", ex);
             }
         }
-
-
     }
 }

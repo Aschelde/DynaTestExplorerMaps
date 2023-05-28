@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using DynaTestExplorerMaps.ViewModels;
+using DynaTestExplorerMaps.Interfaces;
 
 namespace DynaTestExplorerMaps.Views
 {
@@ -21,20 +22,17 @@ namespace DynaTestExplorerMaps.Views
     /// </summary>
     public partial class OptionsControl : UserControl
     {
-        private OptionsViewModel _optionsViewModel;
-
-        public OptionsControl(OptionsViewModel optionsViewModel)
+        public OptionsControl(IOptionsViewModel optionsViewModel)
         {
             InitializeComponent();
-            _optionsViewModel = optionsViewModel;
-            this.DataContext = _optionsViewModel;
+            this.DataContext = optionsViewModel;
         }
 
         private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            if (_optionsViewModel != null)
+            if (this.DataContext is IOptionsViewModel optionsViewModel)
             {
-                _optionsViewModel.MeasurementIntervalChangedCommand?.Execute((int)Math.Round(e.NewValue));
+                optionsViewModel.HandleMeasurementIntervalChanged((int)Math.Round(e.NewValue));
                 SliderValueText.Text = "" + Math.Round(e.NewValue);
             }
         }

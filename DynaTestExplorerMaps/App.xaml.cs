@@ -29,7 +29,7 @@ namespace DynaTestExplorerMaps
                 services.AddSingleton<IDataAccessLayer, DataAccessLayer>();
 
                 services.AddSingleton<MainWindow>();
-                services.AddTransient<MapViewModel>();
+                services.AddTransient<IMapViewModel, MapViewModel>();
                 services.AddTransient<ImageViewModel>();
                 services.AddTransient<DataViewModel>();
                 services.AddTransient<OptionsViewModel>();

@@ -31,7 +31,7 @@ namespace DynaTestExplorerMaps.ViewModels
     /// <summary>
     /// Provides map data to an application
     /// </summary>
-    public class MapViewModel : BaseViewModel, IUserControlViewModel
+    public class MapViewModel : BaseViewModel, IMapViewModel
     {
         private readonly IDataAccessLayer _dataAccessLayer;
         private Map _map;
@@ -42,8 +42,6 @@ namespace DynaTestExplorerMaps.ViewModels
         private List<GpsPoint> points;
         private Dictionary<Graphic, GpsPoint> _pointGraphicToGpsPointMap;
         private int _selectionId;
-
-        public ICommand GeoViewTappedCommand { get; set; }
 
         public MapViewModel()
         {
@@ -56,8 +54,6 @@ namespace DynaTestExplorerMaps.ViewModels
             CreateGraphics();
 
             CreateBounds();
-
-            GeoViewTappedCommand = new RelayCommand<Graphic>(HandleGeoViewTapped);
 
             WeakReferenceMessenger.Default.Register<SelectionChangedMessage>(this, (r, m) =>
             {
@@ -164,9 +160,11 @@ namespace DynaTestExplorerMaps.ViewModels
             //create all Gps points as point graphic.
             foreach (GpsPoint point in points)
             {
-                var pointGraphic = new Graphic(new MapPoint(point.Longitude, point.Latitude, SpatialReferences.Wgs84), pointSymbol);
+                var pointGraphic = new Graphic(new MapPoint(point.Longitude, point.Latitude, SpatialReferences.Wgs84), pointSymbol)
+                {
+                    Attributes = { ["Id"] = point.Id }
+                };
                 _gpsPointsGraphicsOverlay.Graphics.Add(pointGraphic);
-
                 _pointGraphicToGpsPointMap.Add(pointGraphic, point);
             }
 
@@ -191,7 +189,7 @@ namespace DynaTestExplorerMaps.ViewModels
             UpdateTracker(_selectionId);
         }
 
-        public void UpdateTracker(int Id)
+        private void UpdateTracker(int Id)
         {
             // Look for the existing graphic for the selected ID in the _mapView.GraphicsOverlays.
             Graphic selectedGraphic = _gpsPointsGraphicsOverlay.Graphics.FirstOrDefault(g => _pointGraphicToGpsPointMap[g].Id == _selectionId);
@@ -258,7 +256,7 @@ namespace DynaTestExplorerMaps.ViewModels
             }
         }
 
-        public void UpdateSelection(int newSelectionId) 
+        private void UpdateSelection(int newSelectionId) 
         {
             if (_selectionId == newSelectionId)
             {
@@ -269,15 +267,19 @@ namespace DynaTestExplorerMaps.ViewModels
             _selectionId = newSelectionId;
         }
 
-        private async void HandleGeoViewTapped(Graphic identifiedGraphic)
+        public void HandleMapTapped(int id)
         {
-            if (_pointGraphicToGpsPointMap.ContainsKey(identifiedGraphic))
+            GpsPoint gpsPoint;
+            try
             {
-                // Get the corresponding GpsPoint from the dictionary
-                GpsPoint gpsPoint = _pointGraphicToGpsPointMap[identifiedGraphic];
-                UpdateTracker(gpsPoint.Id);
-                WeakReferenceMessenger.Default.Send(new SelectionChangedMessage(gpsPoint.Id));
+                gpsPoint = points.Single(point => point.Id == id);
             }
+            catch (InvalidOperationException)
+            {
+                return;
+            }
+            UpdateTracker(gpsPoint.Id);
+            WeakReferenceMessenger.Default.Send(new SelectionChangedMessage(gpsPoint.Id));
         }
     }
 }

@@ -25,6 +25,7 @@ using System.Diagnostics;
 using System.ComponentModel;
 using static System.Formats.Asn1.AsnWriter;
 using System.Xml.Linq;
+using DynaTestExplorerMaps.Interfaces;
 
 namespace DynaTestExplorerMaps.Views
 {
@@ -34,28 +35,8 @@ namespace DynaTestExplorerMaps.Views
     public partial class MapControl : UserControl
     {
         private TaskCompletionSource<bool> _mapViewLoadedTaskCompletionSource = new TaskCompletionSource<bool>();
-        public MapControl()
-        {
-            InitializeComponent();
 
-            MapViewModel mapViewModel = App.AppHost.Services.GetRequiredService<MapViewModel>();
-
-            Debug.WriteLine("MapControl constructor start");
-
-            MainMapView.Loaded += MainMapView_Loaded;
-            mapViewModel.PropertyChanged += OnMapViewModelPropertyChanged;
-            MainMapView.GeoViewTapped += OnGeoViewTapped;
-
-            Debug.WriteLine("MapControl constructor done");
-
-            if (mapViewModel.Bounds != null)
-            {
-                Debug.WriteLine("Bounds was not null");
-                UpdateViewPointAsync(mapViewModel.Bounds);
-            }
-        }
-
-        public MapControl(MapViewModel mapViewModel)
+        public MapControl(IMapViewModel mapViewModel)
         {
             InitializeComponent();
 
@@ -77,9 +58,9 @@ namespace DynaTestExplorerMaps.Views
 
         private void OnMapViewModelPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(MapViewModel.Bounds))
+            if (e.PropertyName == nameof(IMapViewModel.Bounds))
             {
-                MapViewModel mapViewModel = (MapViewModel)sender;
+                IMapViewModel mapViewModel = (IMapViewModel)sender;
                 UpdateViewPointAsync(mapViewModel.Bounds);
             }
         }
@@ -90,7 +71,7 @@ namespace DynaTestExplorerMaps.Views
             await _mapViewLoadedTaskCompletionSource.Task;
             Debug.WriteLine("Sizes: " + MainMapView.ActualWidth + ", " + bounds.Width);
             double conversionFactor = 500;
-            double scale = (Math.Max(bounds.Width / MainMapView.ActualWidth, bounds.Height / MainMapView.ActualHeight)+padding) * conversionFactor;
+            double scale = (Math.Max(bounds.Width / MainMapView.ActualWidth, bounds.Height / MainMapView.ActualHeight) + padding) * conversionFactor;
             MainMapView.SetViewpoint(new Viewpoint(bounds.GetCenter(), scale));
         }
 
@@ -101,7 +82,7 @@ namespace DynaTestExplorerMaps.Views
 
         private async void OnGeoViewTapped(object sender, GeoViewInputEventArgs e)
         {
-            MapViewModel mapViewModel = DataContext as MapViewModel;
+            var mapViewModel = DataContext as IMapViewModel;
             IReadOnlyList<IdentifyGraphicsOverlayResult> results = await MainMapView.IdentifyGraphicsOverlaysAsync(e.Position, tolerance: 2, false);
 
             foreach (IdentifyGraphicsOverlayResult result in results)
@@ -111,14 +92,10 @@ namespace DynaTestExplorerMaps.Views
                     if (result.Graphics.Count > 0)
                     {
                         Graphic identifiedGraphic = result.Graphics.First();
-                        mapViewModel.GeoViewTappedCommand.Execute(identifiedGraphic);
-                    }
-                }
-                else if (result.GraphicsOverlay.Id == "linesOverlay")
-                {
-                    if (result.Graphics.Count > 0)
-                    {
-                        // Do nothing so far
+                        if (identifiedGraphic.Attributes.TryGetValue("Id", out object idObject) && idObject is int id)
+                        {
+                            mapViewModel.HandleMapTapped(id);
+                        }
                     }
                 }
             }

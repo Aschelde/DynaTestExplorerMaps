@@ -34,11 +34,11 @@ namespace DynaTestExplorerMaps.ViewModels
     public class MapViewModel : BaseViewModel, IMapViewModel
     {
         private readonly IDataAccessLayer _dataAccessLayer;
-        private Map _map;
-        private GraphicsOverlayCollection _graphicsOverlays;
+        private object _map;
+        private object _graphicsOverlays;
+        private object _bounds;
         private GraphicsOverlay _gpsPointsGraphicsOverlay;
         private GraphicsOverlay _linesGraphicsOverlay;
-        private Envelope _bounds;
         private List<GpsPoint> points;
         private Dictionary<Graphic, GpsPoint> _pointGraphicToGpsPointMap;
         private int _selectionId;
@@ -68,7 +68,7 @@ namespace DynaTestExplorerMaps.ViewModels
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        public Map Map
+        public object Map
         {
             get { return _map; }
             set
@@ -78,13 +78,26 @@ namespace DynaTestExplorerMaps.ViewModels
             }
         }
 
-        public GraphicsOverlayCollection GraphicsOverlays
+        public object GraphicsOverlays
         {
             get { return _graphicsOverlays; }
             set
             {
                 _graphicsOverlays = value;
                 OnPropertyChanged();
+            }
+        }
+
+        public object Bounds
+        {
+            get { return _bounds; }
+            set
+            {
+                if (_bounds != value)
+                {
+                    _bounds = value;
+                    OnPropertyChanged(nameof(Bounds));
+                }
             }
         }
 
@@ -104,18 +117,6 @@ namespace DynaTestExplorerMaps.ViewModels
             Bounds = GeometryEngine.Project(graphicsExtent, projectedSR) as Envelope;
         }
 
-        public Envelope Bounds
-        {
-            get { return _bounds; }
-            set
-            {
-                if (_bounds != value)
-                {
-                    _bounds = value;
-                    OnPropertyChanged(nameof(Bounds));
-                }
-            }
-        }
 
         private void CreateGraphics()
         {

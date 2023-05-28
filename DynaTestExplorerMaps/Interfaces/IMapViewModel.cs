@@ -12,9 +12,9 @@ namespace DynaTestExplorerMaps.Interfaces
 {
     public interface IMapViewModel
     {
-        Map Map { get; set; }
-        GraphicsOverlayCollection GraphicsOverlays { get; set; }
-        Envelope Bounds { get; set; }
+        Object Map { get; set; }
+        Object GraphicsOverlays { get; set; }
+        Object Bounds { get; set; }
         event PropertyChangedEventHandler PropertyChanged;
 
         void HandleMapTapped(int id);

@@ -52,7 +52,7 @@ namespace DynaTestExplorerMaps.Views
             if (mapViewModel.Bounds != null)
             {
                 Debug.WriteLine("Bounds was not null");
-                UpdateViewPointAsync(mapViewModel.Bounds);
+                UpdateViewPointAsync(mapViewModel.Bounds as Envelope);
             }
         }
 
@@ -61,7 +61,7 @@ namespace DynaTestExplorerMaps.Views
             if (e.PropertyName == nameof(IMapViewModel.Bounds))
             {
                 IMapViewModel mapViewModel = (IMapViewModel)sender;
-                UpdateViewPointAsync(mapViewModel.Bounds);
+                UpdateViewPointAsync(mapViewModel.Bounds as Envelope);
             }
         }
 

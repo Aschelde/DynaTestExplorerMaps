@@ -13,11 +13,10 @@ namespace DynaTestExplorerMaps.Interfaces
     {
         event PropertyChangedEventHandler PropertyChanged;
         List<GpsPoint> GetGpsPoints();
-        List<GpsPoint> GetGpsPointsReduced(int distancePerPoint);
         List<GpsPoint> GetInterpolatedImagePoints();
         List<ImageItem> GetImages();
-        List<IriItem> GetIriItems();
-        List<IriSegment> GetIriSegments();
+        List<MeasurementItem> GetMeasurementItems();
+        List<MeasurementSegment> GetMeasurementSegments();
         Tuple<int, int> GetMaxMinMeasurementInterval();
     }
 }

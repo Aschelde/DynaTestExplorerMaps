@@ -21,27 +21,37 @@ namespace DynaTestExplorerMaps.Models
     {
         private int currentSurveyId;
         private int _distancePerSegment;
+        private string _measurementType;
         private int _imageLength;
         private string connectionString = "Server=localhost;Port=5433;Database=dynatestexplorer;User Id=postgres;Password=password;";
         private List<GpsPoint> _gpsPoints;
         private List<GpsPoint> _interpolatedImagePoints;
-        private List<IriItem> _iriItems;
-        private List<IriSegment> _segments;
+        private List<MeasurementItem> _measurementItems;
+        private List<MeasurementSegment> _segments;
 
         IImageLoader _imageLoader;
 
-        public DataAccessLayer(IImageLoader imageLoader, int surveyId)
+        public DataAccessLayer(IImageLoader imageLoader)
         {
-            currentSurveyId = surveyId;
+            currentSurveyId = 0;
             _distancePerSegment = 10;
+            _measurementType = "IRI";
 
             GetGpsPoints();
             GetInterpolatedImagePoints();
-            GetIriItems();
+            GetMeasurementItems();
 
             WeakReferenceMessenger.Default.Register<MeasurementIntervalChangedMessage>(this, (r, m) =>
             {
                 _distancePerSegment = m.Value;
+                _segments = null;
+
+                OnPropertyChanged();
+            });
+
+            WeakReferenceMessenger.Default.Register<MeasurementTypeChangedMessage>(this, (r, m) =>
+            {
+                _measurementType = m.Value;
                 _segments = null;
 
                 OnPropertyChanged();
@@ -89,36 +99,6 @@ namespace DynaTestExplorerMaps.Models
             return _gpsPoints;
         }
 
-        public List<GpsPoint> GetGpsPointsReduced(int distancePerPoint)
-        {
-            var gpsPoints = new List<GpsPoint>();
-
-            using (var conn = new NpgsqlConnection(connectionString))
-            {
-                conn.Open();
-                using (var cmd = new NpgsqlCommand($"SELECT DISTINCT ON (distance / {distancePerPoint}) point_id, distance, time_s, latitude, longitude, elevation " +
-                        $"FROM points WHERE survey_id = {currentSurveyId}", conn))
-                {
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            var gpsPoint = new GpsPoint
-                            {
-                                Id = reader.GetInt32(reader.GetOrdinal("point_id")),
-                                Distance = reader.GetFloat(reader.GetOrdinal("distance")),
-                                Latitude = reader.GetFloat(reader.GetOrdinal("latitude")),
-                                Longitude = reader.GetFloat(reader.GetOrdinal("longitude")),
-                           };
-
-                            gpsPoints.Add(gpsPoint);
-                        }
-                    }
-                }
-            }
-
-            return gpsPoints;
-        }
 
         public List<GpsPoint> GetInterpolatedImagePoints()
         {
@@ -188,46 +168,47 @@ namespace DynaTestExplorerMaps.Models
             return images;
         }
 
-        public List<IriItem> GetIriItems()
+        public List<MeasurementItem> GetMeasurementItems()
         {
-            if (_iriItems == null)
+            if (_measurementItems == null)
             {
-                _iriItems = new List<IriItem>();
+                _measurementItems = new List<MeasurementItem>();
 
                 using (var conn = new NpgsqlConnection(connectionString))
                 {
                     conn.Open();
-                    using (var cmd = new NpgsqlCommand($"SELECT value_id, distance_begin, distance_end, iri_value " +
-                            $"FROM iri_values WHERE survey_id = {currentSurveyId}", conn))
+                    using (var cmd = new NpgsqlCommand($"SELECT value_id, distance_begin, distance_end, measurement_value, measurement_type " +
+                            $"FROM measurements WHERE survey_id = {currentSurveyId} AND measurement_type = 'IRI'", conn))
                     {
                         using (var reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
                             {
-                                var iriItem = new IriItem
+                                var iriItem = new MeasurementItem
                                 {
                                     Id = reader.GetInt32(reader.GetOrdinal("value_id")),
+                                    Type = reader.GetString(reader.GetOrdinal("measurement_type")),
                                     DistanceRange = new Tuple<float, float>(reader.GetFloat(reader.GetOrdinal("distance_begin")), reader.GetFloat(reader.GetOrdinal("distance_end"))),
-                                    Iri = reader.GetFloat(reader.GetOrdinal("iri_value"))
+                                    Value = reader.GetFloat(reader.GetOrdinal("measurement_value"))
                                 };
 
-                                _iriItems.Add(iriItem);
+                                _measurementItems.Add(iriItem);
                             }
                         }
                     }
                 }
             }
 
-            return _iriItems;
+            return _measurementItems;
         }
 
-        public List<IriSegment> GetIriSegments()
+        public List<MeasurementSegment> GetMeasurementSegments()
         {
             if (_segments == null)
             {
-                _segments = new List<IriSegment>();
+                _segments = new List<MeasurementSegment>();
 
-                List<IriItem> itemsInRange;
+                List<MeasurementItem> itemsInRange;
                 List<int> imagePointIds;
 
                 float startDistance = _gpsPoints[0].Distance;
@@ -254,8 +235,8 @@ namespace DynaTestExplorerMaps.Models
 
                     if (currentId == 0)
                     {
-                        // Find all the IriItems within the current segment
-                        itemsInRange = _iriItems
+                        // Find all the MeasurementItems within the current segment
+                        itemsInRange = _measurementItems
                             .Where(x => x.DistanceRange.Item2 <= endDistance)
                             .ToList();
 
@@ -268,7 +249,7 @@ namespace DynaTestExplorerMaps.Models
                     else if (endDistance >= _gpsPoints[^1].Distance)
                     {
                         // Find all the IriItems within the current segment
-                        itemsInRange = _iriItems
+                        itemsInRange = _measurementItems
                             .Where(x => x.DistanceRange.Item2 > startDistance)
                             .ToList();
 
@@ -281,7 +262,7 @@ namespace DynaTestExplorerMaps.Models
                     else
                     {
                         // Find all the IriItems within the current segment
-                        itemsInRange = _iriItems
+                        itemsInRange = _measurementItems
                             .Where(x => x.DistanceRange.Item1 > startDistance && x.DistanceRange.Item2 <= endDistance)
                             .ToList();
 
@@ -294,14 +275,15 @@ namespace DynaTestExplorerMaps.Models
 
 
                     // Calculate the average IRI within the current segment
-                    float averageIri = itemsInRange.Any() ? itemsInRange.Average(x => x.Iri) : 0;
+                    float meanValue = itemsInRange.Any() ? itemsInRange.Average(x => x.Value) : 0;
 
                     // Create the segment and add it to the list
-                    IriSegment segment = new IriSegment
+                    MeasurementSegment segment = new MeasurementSegment
                     {
                         Id = currentId,
+                        Type = _measurementType,
                         DistanceRange = new Tuple<float, float>(startDistance, endDistance),
-                        AverageIri = averageIri,
+                        MeanValue = meanValue,
                         Images = imagePointIds,
                         Points = pointIds
                     };

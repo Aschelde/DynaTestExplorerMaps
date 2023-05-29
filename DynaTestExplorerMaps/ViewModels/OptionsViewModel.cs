@@ -18,6 +18,7 @@ namespace DynaTestExplorerMaps.ViewModels
     {
         private readonly IDataAccessLayer _dataAccessLayer;
         private int _currentMeasurementInterval;
+        private string _currentMeasurementType;
         private int _maxMeasurementIntervalDistance;
         private int _minMeasurementIntervalDistance;
 
@@ -26,6 +27,7 @@ namespace DynaTestExplorerMaps.ViewModels
             _dataAccessLayer = dataAccessLayer;
             getMaxMinMeasurementInterval();
             _currentMeasurementInterval = 10;
+            _currentMeasurementType = "IRI";
         }
 
         public int MaxMeasurementIntervalDistance
@@ -42,6 +44,12 @@ namespace DynaTestExplorerMaps.ViewModels
         {
             _currentMeasurementInterval = intervalDistance;
             WeakReferenceMessenger.Default.Send(new MeasurementIntervalChangedMessage(intervalDistance));
+        }
+
+        public void HandleMeasurementTypeChanged(string type)
+        {
+            _currentMeasurementType = type;
+            WeakReferenceMessenger.Default.Send(new MeasurementTypeChangedMessage(type));
         }
 
         private void getMaxMinMeasurementInterval ()

@@ -29,7 +29,7 @@ namespace DynaTestExplorerMaps.ViewModels
     {
         private int _selectionId;
         private bool _isInitialized;
-        private List<IriSegment> _iriSegments;
+        private List<MeasurementSegment> _measurementSegments;
         private IDataAccessLayer _dataAccessLayer;
 
         private object _scatterPlotModel;
@@ -40,13 +40,13 @@ namespace DynaTestExplorerMaps.ViewModels
         private LineSeries lineSeries;
 
 
-        public DataViewModel()
+        public DataViewModel(IDataAccessLayer dataAccessLayer)
         {
             _selectionId = 0;
             _isInitialized = false;
 
-            _dataAccessLayer = App.AppHost.Services.GetRequiredService<IDataAccessLayer>();
-            _iriSegments = _dataAccessLayer.GetIriSegments();
+            _dataAccessLayer = dataAccessLayer;
+            _measurementSegments = _dataAccessLayer.GetMeasurementSegments();
 
             UpdateScatterPlotModel();
 
@@ -61,7 +61,7 @@ namespace DynaTestExplorerMaps.ViewModels
         private void _dataAccessLayer_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             Debug.WriteLine("DataAccesLayer PropertyChanged");
-            _iriSegments = _dataAccessLayer.GetIriSegments();
+            _measurementSegments = _dataAccessLayer.GetMeasurementSegments();
             UpdateScatterPlotModel();
         }
 
@@ -107,15 +107,15 @@ namespace DynaTestExplorerMaps.ViewModels
                 _legend.LegendPosition = LegendPosition.TopLeft;
 
                 var xAxis = new LinearAxis { Position = AxisPosition.Bottom, Title = "Distance", Key = "CategoryAxis" };
-                var yAxis = new LinearAxis { Position = AxisPosition.Left, Title = "Average IRI", Key = "ValueAxis" };
+                var yAxis = new LinearAxis { Position = AxisPosition.Left, Title = "Mean " + _measurementSegments[0].Type, Key = "ValueAxis" };
 
-                xAxis.Minimum = _iriSegments.Min(s => s.DistanceRange.Item1) - 20;
-                xAxis.Maximum = _iriSegments.Max(s => s.DistanceRange.Item1) + 20;
-                yAxis.Minimum = _iriSegments.Min(s => (double)s.AverageIri) - 0.5;
-                yAxis.Maximum = _iriSegments.Max(s => (double)s.AverageIri) + 1.0;
+                xAxis.Minimum = _measurementSegments.Min(s => s.DistanceRange.Item1) - 20;
+                xAxis.Maximum = _measurementSegments.Max(s => s.DistanceRange.Item1) + 20;
+                yAxis.Minimum = _measurementSegments.Min(s => (double)s.MeanValue) - 0.5;
+                yAxis.Maximum = _measurementSegments.Max(s => (double)s.MeanValue) + 1.0;
 
                 PlotModel model;
-                model = new PlotModel { Title = "IRI vs. Distance" };
+                model = new PlotModel { Title = _measurementSegments[0].Type + " vs. Distance" };
                 model.Axes.Add(xAxis);
                 model.Axes.Add(yAxis);
 
@@ -126,12 +126,12 @@ namespace DynaTestExplorerMaps.ViewModels
                     MarkerFill = OxyColors.LightBlue,
                     MarkerStroke = OxyColors.Blue,
                     MarkerStrokeThickness = 1,
-                    ItemsSource = _iriSegments,
+                    ItemsSource = _measurementSegments,
                     DataFieldX = "DistanceRange.Item1",
-                    DataFieldY = "AverageIri",
+                    DataFieldY = "MeanValue",
                     XAxisKey = "CategoryAxis",
                     YAxisKey = "ValueAxis",
-                    Title = "IRI"
+                    Title = _measurementSegments[0].Type
                 };
 
                 lineSeries = new LineSeries
@@ -139,15 +139,15 @@ namespace DynaTestExplorerMaps.ViewModels
                     StrokeThickness = 3,
                     InterpolationAlgorithm = InterpolationAlgorithms.CanonicalSpline,
                     Color = OxyColors.DarkBlue,
-                    ItemsSource = _iriSegments,
+                    ItemsSource = _measurementSegments,
                     DataFieldX = "DistanceRange.Item1",
-                    DataFieldY = "AverageIri",
+                    DataFieldY = "MeanValue",
                     XAxisKey = "CategoryAxis",
                     YAxisKey = "ValueAxis"
                 };
 
-                var markerSegment = new List<IriSegment>();
-                markerSegment.Add(_iriSegments[0]);
+                var markerSegment = new List<MeasurementSegment>();
+                markerSegment.Add(_measurementSegments[0]);
 
 
                 pointerSeries = new ScatterSeries
@@ -159,7 +159,7 @@ namespace DynaTestExplorerMaps.ViewModels
                     MarkerStrokeThickness = 1,
                     ItemsSource = markerSegment,
                     DataFieldX = "DistanceRange.Item1",
-                    DataFieldY = "AverageIri",
+                    DataFieldY = "MeanValue",
                     XAxisKey = "CategoryAxis",
                     YAxisKey = "ValueAxis",
                     Title = "Marker"
@@ -177,8 +177,8 @@ namespace DynaTestExplorerMaps.ViewModels
 
             } else
             {
-                dataSeries.ItemsSource = _iriSegments;
-                lineSeries.ItemsSource = _iriSegments;
+                dataSeries.ItemsSource = _measurementSegments;
+                lineSeries.ItemsSource = _measurementSegments;
 
                 UpdateTracker();
             }
@@ -195,7 +195,7 @@ namespace DynaTestExplorerMaps.ViewModels
             var maxY = scatterPlotModel.Axes[1].Maximum;
 
             // Calculate the distance between the clicked point and each point in the list
-            var distances = _iriSegments.Select(segment => new { Segment = segment, Distance = Math.Sqrt(Math.Pow(segment.DistanceRange.Item1 - x, 2) + Math.Pow(segment.AverageIri.Value - y, 2)) });
+            var distances = _measurementSegments.Select(segment => new { Segment = segment, Distance = Math.Sqrt(Math.Pow(segment.DistanceRange.Item1 - x, 2) + Math.Pow(segment.MeanValue.Value - y, 2)) });
 
             // Find the segment with the smallest distance
             var closestSegment = distances.OrderBy(d => d.Distance).FirstOrDefault()?.Segment;
@@ -204,8 +204,8 @@ namespace DynaTestExplorerMaps.ViewModels
             {
                 if ((closestSegment.DistanceRange.Item1 < x + (1.0 / 100.0 * maxX)) 
                     && (closestSegment.DistanceRange.Item1 > x - (1.0 / 100.0 * maxX)) 
-                    && (closestSegment.AverageIri < y + (1.0 / 50.0 * maxY))
-                    && (closestSegment.AverageIri > y - (1.0 / 50.0 * maxY))) 
+                    && (closestSegment.MeanValue < y + (1.0 / 50.0 * maxY))
+                    && (closestSegment.MeanValue > y - (1.0 / 50.0 * maxY))) 
                 {
                     HandleDataValueSelected(closestSegment.Id);
                 }
@@ -215,18 +215,18 @@ namespace DynaTestExplorerMaps.ViewModels
 
         private void HandleDataValueSelected(int segmentId)
         {
-            if (!(_iriSegments[segmentId].Images.Contains(_selectionId)))
+            if (!(_measurementSegments[segmentId].Images.Contains(_selectionId)))
             {
-                SelectionId = _iriSegments[segmentId].Images[0];
+                SelectionId = _measurementSegments[segmentId].Images[0];
                 Debug.WriteLine("Selected " + _selectionId);
-                WeakReferenceMessenger.Default.Send(new SelectionChangedMessage(_iriSegments[segmentId].Images[0]));
+                WeakReferenceMessenger.Default.Send(new SelectionChangedMessage(_measurementSegments[segmentId].Images[0]));
             }
         }
 
         private void UpdateTracker()
         {
-            var markerSegment = new List<IriSegment>();
-            markerSegment.Add(_iriSegments.Where(s => s.Images.Contains(_selectionId)).FirstOrDefault());
+            var markerSegment = new List<MeasurementSegment>();
+            markerSegment.Add(_measurementSegments.Where(s => s.Images.Contains(_selectionId)).FirstOrDefault());
             
             // Modify the ItemsSource property of the existing pointerSeries
             pointerSeries.ItemsSource = markerSegment;
@@ -234,17 +234,5 @@ namespace DynaTestExplorerMaps.ViewModels
             var scatterPlotModel = PlotModel as PlotModel;
             scatterPlotModel.InvalidatePlot(true);
         }
-
-        private List<IriSegment> GetIriSegments()
-        {
-            if (_iriSegments != null)
-            {
-                return _iriSegments;
-            }
-
-            _iriSegments = _dataAccessLayer.GetIriSegments();
-
-            return _iriSegments;
-        }   
     }
 }

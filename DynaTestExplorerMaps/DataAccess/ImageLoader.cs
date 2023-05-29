@@ -9,7 +9,7 @@ using System.Windows.Xps;
 using System.Diagnostics;
 using DynaTestExplorerMaps.Interfaces;
 
-namespace DynaTestExplorerMaps.Models
+namespace DynaTestExplorerMaps.DataAccess
 {
     public class ImageLoader : IImageLoader
     {

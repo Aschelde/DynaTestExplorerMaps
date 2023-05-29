@@ -1,4 +1,3 @@
-using DynaTestExplorerMaps.Models;
 using DynaTestExplorerMaps.ViewModels;
 using DynaTestExplorerMaps.Views;
 using DynaTestExplorerMaps.Interfaces;
@@ -9,6 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Windows;
+using DynaTestExplorerMaps.DataAccess;
+using DynaTestExplorerMaps.Services;
 
 namespace DynaTestExplorerMaps
 {
@@ -28,6 +29,8 @@ namespace DynaTestExplorerMaps
             {
                 services.AddSingleton<IImageLoader, ImageLoader>();
                 services.AddSingleton<IDataAccessLayer, DataAccessLayer>();
+
+                services.AddSingleton<IMapService, MapService>();
 
                 services.AddSingleton<MainWindow>();
                 services.AddTransient<IMapViewModel, MapViewModel>();

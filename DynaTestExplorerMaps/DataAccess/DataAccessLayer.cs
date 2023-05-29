@@ -14,8 +14,9 @@ using DynaTestExplorerMaps.Messages;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
+using DynaTestExplorerMaps.Models;
 
-namespace DynaTestExplorerMaps.Models
+namespace DynaTestExplorerMaps.DataAccess
 {
     class DataAccessLayer : IDataAccessLayer
     {
@@ -57,7 +58,7 @@ namespace DynaTestExplorerMaps.Models
                 OnPropertyChanged();
             });
 
-            this._imageLoader = imageLoader;
+            _imageLoader = imageLoader;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

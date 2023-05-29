@@ -34,6 +34,7 @@ namespace DynaTestExplorerMaps.ViewModels
     public class MapViewModel : BaseViewModel, IMapViewModel
     {
         private readonly IDataAccessLayer _dataAccessLayer;
+        private readonly IMapService _mapService;
         private object _map;
         private object _graphicsOverlays;
         private object _bounds;
@@ -46,14 +47,16 @@ namespace DynaTestExplorerMaps.ViewModels
         public MapViewModel()
         {
             _dataAccessLayer = App.AppHost.Services.GetRequiredService<IDataAccessLayer>();
+            _mapService = App.AppHost.Services.GetRequiredService<IMapService>();
 
-            SetupMap();
+            _map = _mapService.CreateMap();
 
-            _selectionId = 0;
+            GraphicsData graphicsData = _mapService.CreateGraphics(_dataAccessLayer, _selectionId);
+            _graphicsOverlays = graphicsData.Overlays;
+            points = graphicsData.Points;
+            _pointGraphicToGpsPointMap = graphicsData.PointGraphicToGpsPointMap;
 
-            CreateGraphics();
-
-            CreateBounds();
+            _bounds = _mapService.CreateBounds();
 
             WeakReferenceMessenger.Default.Register<SelectionChangedMessage>(this, (r, m) =>
             {
@@ -63,7 +66,7 @@ namespace DynaTestExplorerMaps.ViewModels
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
@@ -73,8 +76,11 @@ namespace DynaTestExplorerMaps.ViewModels
             get { return _map; }
             set
             {
-                _map = value;
-                OnPropertyChanged();
+                if (_map != value)
+                {
+                    _map = value;
+                    OnPropertyChanged(nameof(Map));
+                }
             }
         }
 
@@ -83,8 +89,11 @@ namespace DynaTestExplorerMaps.ViewModels
             get { return _graphicsOverlays; }
             set
             {
-                _graphicsOverlays = value;
-                OnPropertyChanged();
+                if (_graphicsOverlays != value)
+                {
+                    _graphicsOverlays = value;
+                    OnPropertyChanged(nameof(GraphicsOverlays));
+                }
             }
         }
 
@@ -101,170 +110,14 @@ namespace DynaTestExplorerMaps.ViewModels
             }
         }
 
-        private void SetupMap()
-        {
-            // Create a new map with a 'topographic vector' basemap.
-            Map = new Map(BasemapStyle.ArcGISStreets);
-        }
-
-        private void CreateBounds()
-        {
-            // Get the extent of your graphics overlay
-            Envelope graphicsExtent = _gpsPointsGraphicsOverlay.Graphics.Select(graphic => graphic.Geometry.Extent).CombineExtents();
-
-            Debug.WriteLine(graphicsExtent.XMin + ", " + graphicsExtent.YMin + ", " + graphicsExtent.XMax + ", " + graphicsExtent.YMax);
-            SpatialReference projectedSR = SpatialReferences.WebMercator;
-            Bounds = GeometryEngine.Project(graphicsExtent, projectedSR) as Envelope;
-        }
-
-
-        private void CreateGraphics()
-        {
-            // Create a new graphics overlay to contain a variety of graphics.
-            _gpsPointsGraphicsOverlay = new GraphicsOverlay()
-            {
-                Id = "gpsPointsOverlay"
-            };
-
-            _linesGraphicsOverlay = new GraphicsOverlay()
-            {
-                Id = "linesOverlay"
-            };
-
-            GraphicsOverlayCollection overlays = new GraphicsOverlayCollection
-            {
-                _linesGraphicsOverlay,
-                _gpsPointsGraphicsOverlay
-            };
-            this.GraphicsOverlays = overlays;
-
-            points = _dataAccessLayer.GetInterpolatedImagePoints();
-
-            // Create a symbol to define how the point is displayed.
-            var pointSymbol = new SimpleMarkerSymbol
-            {
-                Style = SimpleMarkerSymbolStyle.Circle,
-                Color = System.Drawing.Color.LightBlue,
-                Size = 5.0
-            };
-
-            // Add an outline to the symbol.
-            pointSymbol.Outline = new SimpleLineSymbol
-            {
-                Style = SimpleLineSymbolStyle.Solid,
-                Color = System.Drawing.Color.Blue,
-                Width = 1.0
-            };
-
-            _pointGraphicToGpsPointMap = new Dictionary<Graphic, GpsPoint>();
-
-            //create all Gps points as point graphic.
-            foreach (GpsPoint point in points)
-            {
-                var pointGraphic = new Graphic(new MapPoint(point.Longitude, point.Latitude, SpatialReferences.Wgs84), pointSymbol)
-                {
-                    Attributes = { ["Id"] = point.Id }
-                };
-                _gpsPointsGraphicsOverlay.Graphics.Add(pointGraphic);
-                _pointGraphicToGpsPointMap.Add(pointGraphic, point);
-            }
-
-            // Create a polyline builder from the list of points.
-            var polylineBuilder = new PolylineBuilder(SpatialReferences.Wgs84);
-            foreach (GpsPoint point in points)
-            {
-                polylineBuilder.AddPoint(new MapPoint(point.Longitude, point.Latitude, SpatialReferences.Wgs84));
-            }
-
-            var lineSymbol = new SimpleLineSymbol
-            {
-                Style = SimpleLineSymbolStyle.Solid,
-                Color = System.Drawing.Color.DarkBlue,
-                Width = 2.0
-            };
-
-            // Create a graphic from the polyline builder.
-            var lineGraphic = new Graphic(polylineBuilder.ToGeometry(), lineSymbol);
-            _linesGraphicsOverlay.Graphics.Add(lineGraphic);
-
-            UpdateTracker(_selectionId);
-        }
-
-        private void UpdateTracker(int Id)
-        {
-            // Look for the existing graphic for the selected ID in the _mapView.GraphicsOverlays.
-            Graphic selectedGraphic = _gpsPointsGraphicsOverlay.Graphics.FirstOrDefault(g => _pointGraphicToGpsPointMap[g].Id == _selectionId);
-
-            if (selectedGraphic != null)
-            {
-                // Change the symbol for the existing graphic to a normal symbol.
-                var pointSymbol = new SimpleMarkerSymbol
-                {
-                    Style = SimpleMarkerSymbolStyle.Circle,
-                    Color = System.Drawing.Color.LightBlue,
-                    Size = 5.0
-                };
-                pointSymbol.Outline = new SimpleLineSymbol
-                {
-                    Style = SimpleLineSymbolStyle.Solid,
-                    Color = System.Drawing.Color.Blue,
-                    Width = 1.0
-                };
-                selectedGraphic.Symbol = pointSymbol;
-            }
-
-            GpsPoint? point = points.Find(GpsPoint => GpsPoint.Id == Id);
-            GpsPoint? nextPoint = points.Find(GpsPoint => GpsPoint.Id == Id + 1);
-
-            double angle = 0;
-            //Calculate the angle between the two points
-            if (nextPoint != null)
-            {
-                angle = Math.Atan2(nextPoint.Latitude - point.Latitude, nextPoint.Longitude - point.Longitude) * 180 / Math.PI;
-            } else
-            {
-                // Use angle from current to last point
-                GpsPoint? lastPoint = points.Find(GpsPoint => GpsPoint.Id == Id - 1);
-                if (lastPoint != null)
-                {
-                    angle = Math.Atan2(lastPoint.Latitude - point.Latitude, lastPoint.Longitude - point.Longitude) * 180 / Math.PI;
-                }
-            }
-
-            // Find the existing graphic for the new GPS point for the selected ID in the _gpsPointsGraphicsOverlay.
-            Graphic newGraphic = _gpsPointsGraphicsOverlay.Graphics.FirstOrDefault(g => _pointGraphicToGpsPointMap[g] == point);
-
-            if (newGraphic != null && _pointGraphicToGpsPointMap[selectedGraphic].Id == _selectionId)
-            {
-                var pictureMarkerSymbol = new PictureMarkerSymbol(new Uri("pack://application:,,,/Graphics/arrow.png"));
-
-                pictureMarkerSymbol.Angle = -angle;
-
-                // Update the existing graphic for the new GPS point with a different symbol.
-                var pointSymbol = new SimpleMarkerSymbol
-                {
-                    Style = SimpleMarkerSymbolStyle.Circle,
-                    Color = System.Drawing.Color.Red,
-                    Size = 12.0
-                };
-                pointSymbol.Outline = new SimpleLineSymbol
-                {
-                    Style = SimpleLineSymbolStyle.Solid,
-                    Color = System.Drawing.Color.DarkRed,
-                    Width = 3.0
-                };
-                newGraphic.Symbol = pictureMarkerSymbol;
-            }
-        }
-
-        private void UpdateSelection(int newSelectionId) 
+        private void UpdateSelection(int newSelectionId)
         {
             if (_selectionId == newSelectionId)
             {
                 return;
             }
             Debug.WriteLine("ImageViewModel: SelectionChangedMessage received with new id " + newSelectionId);
-            UpdateTracker(newSelectionId);
+            _mapService.UpdateTracker(newSelectionId);
             _selectionId = newSelectionId;
         }
 
@@ -279,7 +132,7 @@ namespace DynaTestExplorerMaps.ViewModels
             {
                 return;
             }
-            UpdateTracker(gpsPoint.Id);
+            _mapService.UpdateTracker(gpsPoint.Id);
             WeakReferenceMessenger.Default.Send(new SelectionChangedMessage(gpsPoint.Id));
         }
     }

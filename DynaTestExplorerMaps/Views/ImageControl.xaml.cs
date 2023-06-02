@@ -1,23 +1,12 @@
 ﻿using DynaTestExplorerMaps.Models;
 using DynaTestExplorerMaps.ViewModels;
 using DynaTestExplorerMaps.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 
 namespace DynaTestExplorerMaps.Views
@@ -26,7 +15,6 @@ namespace DynaTestExplorerMaps.Views
     {
         private FrameworkElement _lastElementInCenterView;
         private ImageItem _selectedImage;
-        private int _lastImageId;
 
         public ImageControl(IImageViewModel imageViewModel)
         {
@@ -34,8 +22,6 @@ namespace DynaTestExplorerMaps.Views
             var images = imageViewModel.GetImages();
             imageControl.ItemsSource = images;
             this.DataContext = imageViewModel;
-
-            _lastImageId = images[^1].Id;
 
             imageViewModel.PropertyChanged += OnImageViewModelPropertyChanged;
             scrollViewer.ScrollChanged += ScrollViewer_ScrollChanged;

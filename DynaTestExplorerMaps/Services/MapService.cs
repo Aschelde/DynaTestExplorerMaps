@@ -75,7 +75,7 @@ namespace DynaTestExplorerMaps.Services
             {
                 Style = SimpleMarkerSymbolStyle.Circle,
                 Color = System.Drawing.Color.LightBlue,
-                Size = 5.0
+                Size = 10.0
             };
 
             // Add an outline to the symbol.
@@ -131,7 +131,7 @@ namespace DynaTestExplorerMaps.Services
                 {
                     Style = SimpleMarkerSymbolStyle.Circle,
                     Color = System.Drawing.Color.LightBlue,
-                    Size = 5.0
+                    Size = 10.0
                 };
                 pointSymbol.Outline = new SimpleLineSymbol
                 {
@@ -152,7 +152,7 @@ namespace DynaTestExplorerMaps.Services
                 {
                     Style = SimpleMarkerSymbolStyle.Circle,
                     Color = System.Drawing.Color.LightBlue,
-                    Size = 5.0
+                    Size = 10.0
                 };
                 pointSymbol.Outline = new SimpleLineSymbol
                 {
@@ -189,6 +189,8 @@ namespace DynaTestExplorerMaps.Services
             {
                 var pictureMarkerSymbol = new PictureMarkerSymbol(new Uri("pack://application:,,,/Graphics/arrow.png"));
 
+                pictureMarkerSymbol.Width = 50;
+                pictureMarkerSymbol.Height = 50;
                 pictureMarkerSymbol.Angle = -angle;
 
                 // Update the existing graphic for the new GPS point with a different symbol.
@@ -196,7 +198,7 @@ namespace DynaTestExplorerMaps.Services
                 {
                     Style = SimpleMarkerSymbolStyle.Circle,
                     Color = System.Drawing.Color.Red,
-                    Size = 12.0
+                    Size = 15.0
                 };
                 pointSymbol.Outline = new SimpleLineSymbol
                 {

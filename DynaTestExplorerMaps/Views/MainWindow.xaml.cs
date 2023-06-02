@@ -1,7 +1,4 @@
-﻿using DynaTestExplorerMaps.ViewModels;
-using Esri.ArcGISRuntime.Geometry;
-using Esri.ArcGISRuntime.Mapping;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 
 namespace DynaTestExplorerMaps.Views
@@ -20,10 +17,7 @@ namespace DynaTestExplorerMaps.Views
             this.optionsContentControl.Content = App.AppHost.Services.GetRequiredService<OptionsControl>();
 
             this.WindowStyle = WindowStyle.SingleBorderWindow;
-
-            // set the WindowState to Maximized to make the window full screen
             this.WindowState = WindowState.Maximized;
-
         }
     }
 }

@@ -2,29 +2,22 @@
 using System.Collections.Generic;
 using DynaTestExplorerMaps.Interfaces;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Npgsql;
-using System.Threading;
-using System.Diagnostics;
-using System.Windows.Media;
-using System.Security.Cryptography.X509Certificates;
 using CommunityToolkit.Mvvm.Messaging;
 using DynaTestExplorerMaps.Messages;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using Microsoft.Extensions.DependencyInjection;
 using DynaTestExplorerMaps.Models;
 
 namespace DynaTestExplorerMaps.DataAccess
 {
     class DataAccessLayer : IDataAccessLayer
     {
-        private int currentSurveyId;
+        private int _currentSurveyId;
         private int _distancePerSegment;
         private string _measurementType;
         private int _imageLength;
-        private string connectionString = "Server=localhost;Port=5433;Database=dynatestexplorer;User Id=postgres;Password=password;";
+        private string _connectionString = "Server=localhost;Port=5433;Database=dynatestexplorer;User Id=postgres;Password=password;";
         private List<GpsPoint> _gpsPoints;
         private List<GpsPoint> _interpolatedImagePoints;
         private List<MeasurementItem> _measurementItems;
@@ -34,7 +27,7 @@ namespace DynaTestExplorerMaps.DataAccess
 
         public DataAccessLayer(IImageLoader imageLoader)
         {
-            currentSurveyId = 0;
+            _currentSurveyId = 0;
             _distancePerSegment = 10;
             _measurementType = "IRI";
 
@@ -73,11 +66,11 @@ namespace DynaTestExplorerMaps.DataAccess
             {
                 _gpsPoints = new List<GpsPoint>();
 
-                using (var conn = new NpgsqlConnection(connectionString))
+                using (var conn = new NpgsqlConnection(_connectionString))
                 {
                     conn.Open();
                     using (var cmd = new NpgsqlCommand($"SELECT point_id, distance, ST_X(geom) AS latitude, ST_Y(geom) AS longitude " +
-                            $"FROM points WHERE survey_id = {currentSurveyId}", conn))
+                            $"FROM points WHERE survey_id = {_currentSurveyId}", conn))
                     {
                         using (var reader = cmd.ExecuteReader())
                         {
@@ -107,12 +100,12 @@ namespace DynaTestExplorerMaps.DataAccess
             {
                 _interpolatedImagePoints = new List<GpsPoint>();
 
-                using (var conn = new NpgsqlConnection(connectionString))
+                using (var conn = new NpgsqlConnection(_connectionString))
                 {
                     conn.Open();
                     using (var cmd = new NpgsqlCommand($"SELECT section_id, distance_begin, ST_Y(ip) AS latitude, ST_X(ip) AS longitude FROM ( " +
-                    $"SELECT section_id, distance_begin, interpolate_point({currentSurveyId}, section_id) AS ip " +
-                    $"FROM image_sections WHERE image_sections.survey_id = {currentSurveyId}) AS subquery", conn))
+                    $"SELECT section_id, distance_begin, interpolate_point({_currentSurveyId}, section_id) AS ip " +
+                    $"FROM image_sections WHERE image_sections.survey_id = {_currentSurveyId}) AS subquery", conn))
                     {
                         using (var reader = cmd.ExecuteReader())
                         {
@@ -144,11 +137,11 @@ namespace DynaTestExplorerMaps.DataAccess
         {
             var images = new List<ImageItem>();
 
-            using (var conn = new NpgsqlConnection(connectionString))
+            using (var conn = new NpgsqlConnection(_connectionString))
             {
                 conn.Open();
                 using (var cmd = new NpgsqlCommand($"SELECT section_id, image_path FROM image_sections " +
-                        $"WHERE survey_id = {currentSurveyId}", conn))
+                        $"WHERE survey_id = {_currentSurveyId}", conn))
                 {
                     using (var reader = cmd.ExecuteReader())
                     {
@@ -175,11 +168,11 @@ namespace DynaTestExplorerMaps.DataAccess
             {
                 _measurementItems = new List<MeasurementItem>();
 
-                using (var conn = new NpgsqlConnection(connectionString))
+                using (var conn = new NpgsqlConnection(_connectionString))
                 {
                     conn.Open();
                     using (var cmd = new NpgsqlCommand($"SELECT value_id, distance_begin, distance_end, measurement_value, measurement_type " +
-                            $"FROM measurements WHERE survey_id = {currentSurveyId} AND measurement_type = 'IRI'", conn))
+                            $"FROM measurements WHERE survey_id = {_currentSurveyId} AND measurement_type = 'IRI'", conn))
                     {
                         using (var reader = cmd.ExecuteReader())
                         {

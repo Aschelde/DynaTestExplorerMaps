@@ -1,17 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
 using DynaTestExplorerMaps.Interfaces;
 using DynaTestExplorerMaps.Messages;
-using DynaTestExplorerMaps.EventHandling;
 using DynaTestExplorerMaps.Models;
-using Esri.ArcGISRuntime.UI;
-using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Input;
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 

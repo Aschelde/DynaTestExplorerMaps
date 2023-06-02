@@ -3,25 +3,15 @@ using CommunityToolkit.Mvvm.Messaging;
 using System.Collections.Generic;
 using DynaTestExplorerMaps.Models;
 using DynaTestExplorerMaps.Messages;
-using DynaTestExplorerMaps.EventHandling;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Input;
 using System.Diagnostics;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using DynaTestExplorerMaps.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
 using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
-using OxyPlot.Wpf;
 using OxyPlot.Legends;
-using OxyPlot.Annotations;
-using OxyPlot.Utilities;
-using Windows.Security.Authentication.Web.Core;
-using Esri.ArcGISRuntime.Geometry;
 
 namespace DynaTestExplorerMaps.ViewModels
 {
@@ -35,9 +25,9 @@ namespace DynaTestExplorerMaps.ViewModels
         private object _scatterPlotModel;
         private Legend _legend;
 
-        private ScatterSeries pointerSeries;
-        private ScatterSeries dataSeries;
-        private LineSeries lineSeries;
+        private ScatterSeries _pointerSeries;
+        private ScatterSeries _dataSeries;
+        private LineSeries _lineSeries;
 
 
         public DataViewModel(IDataAccessLayer dataAccessLayer)
@@ -55,10 +45,10 @@ namespace DynaTestExplorerMaps.ViewModels
                 SelectionId = m.Value;
             });
 
-            _dataAccessLayer.PropertyChanged += _dataAccessLayer_PropertyChanged;
+            _dataAccessLayer.PropertyChanged += DataAccessLayer_PropertyChanged;
         }
 
-        private void _dataAccessLayer_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        private void DataAccessLayer_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             Debug.WriteLine("DataAccesLayer PropertyChanged");
             _measurementSegments = _dataAccessLayer.GetMeasurementSegments();
@@ -71,7 +61,7 @@ namespace DynaTestExplorerMaps.ViewModels
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        public int SelectionId
+        private int SelectionId
         {
             get { return _selectionId; }
             set
@@ -119,7 +109,7 @@ namespace DynaTestExplorerMaps.ViewModels
                 model.Axes.Add(xAxis);
                 model.Axes.Add(yAxis);
 
-                dataSeries = new ScatterSeries
+                _dataSeries = new ScatterSeries
                 {
                     MarkerType = MarkerType.Circle,
                     MarkerSize = 6,
@@ -134,7 +124,7 @@ namespace DynaTestExplorerMaps.ViewModels
                     Title = _measurementSegments[0].Type
                 };
 
-                lineSeries = new LineSeries
+                _lineSeries = new LineSeries
                 {
                     StrokeThickness = 3,
                     InterpolationAlgorithm = InterpolationAlgorithms.CanonicalSpline,
@@ -150,7 +140,7 @@ namespace DynaTestExplorerMaps.ViewModels
                 markerSegment.Add(_measurementSegments[0]);
 
 
-                pointerSeries = new ScatterSeries
+                _pointerSeries = new ScatterSeries
                 {
                     MarkerType = MarkerType.Circle,
                     MarkerSize = 7,
@@ -167,9 +157,9 @@ namespace DynaTestExplorerMaps.ViewModels
 
                 model.Legends.Add(_legend);
 
-                model.Series.Add(lineSeries);
-                model.Series.Add(dataSeries);
-                model.Series.Add(pointerSeries);
+                model.Series.Add(_lineSeries);
+                model.Series.Add(_dataSeries);
+                model.Series.Add(_pointerSeries);
 
                 PlotModel = model;
 
@@ -177,8 +167,8 @@ namespace DynaTestExplorerMaps.ViewModels
 
             } else
             {
-                dataSeries.ItemsSource = _measurementSegments;
-                lineSeries.ItemsSource = _measurementSegments;
+                _dataSeries.ItemsSource = _measurementSegments;
+                _lineSeries.ItemsSource = _measurementSegments;
 
                 UpdateTracker();
             }
@@ -218,7 +208,6 @@ namespace DynaTestExplorerMaps.ViewModels
             if (!(_measurementSegments[segmentId].Images.Contains(_selectionId)))
             {
                 SelectionId = _measurementSegments[segmentId].Images[0];
-                Debug.WriteLine("Selected " + _selectionId);
                 WeakReferenceMessenger.Default.Send(new SelectionChangedMessage(_measurementSegments[segmentId].Images[0]));
             }
         }
@@ -229,7 +218,7 @@ namespace DynaTestExplorerMaps.ViewModels
             markerSegment.Add(_measurementSegments.Where(s => s.Images.Contains(_selectionId)).FirstOrDefault());
             
             // Modify the ItemsSource property of the existing pointerSeries
-            pointerSeries.ItemsSource = markerSegment;
+            _pointerSeries.ItemsSource = markerSegment;
 
             var scatterPlotModel = PlotModel as PlotModel;
             scatterPlotModel.InvalidatePlot(true);

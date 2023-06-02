@@ -1,30 +1,13 @@
 using CommunityToolkit.Mvvm.Messaging;
-using DynaTestExplorerMaps.EventHandling;
 using DynaTestExplorerMaps.Interfaces;
 using DynaTestExplorerMaps.Messages;
 using DynaTestExplorerMaps.Models;
-using Esri.ArcGISRuntime.Data;
-using Esri.ArcGISRuntime.Geometry;
-using Esri.ArcGISRuntime.Location;
-using Esri.ArcGISRuntime.Mapping;
-using Esri.ArcGISRuntime.Security;
-using Esri.ArcGISRuntime.Symbology;
-using Esri.ArcGISRuntime.Tasks;
-using Esri.ArcGISRuntime.UI;
-using Esri.ArcGISRuntime.UI.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
-using System.Drawing;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Input;
-using System.Windows.Xps.Serialization;
-using Windows.System;
 
 namespace DynaTestExplorerMaps.ViewModels
 {
@@ -38,10 +21,7 @@ namespace DynaTestExplorerMaps.ViewModels
         private object _map;
         private object _graphicsOverlays;
         private object _bounds;
-        private GraphicsOverlay _gpsPointsGraphicsOverlay;
-        private GraphicsOverlay _linesGraphicsOverlay;
-        private List<GpsPoint> points;
-        private Dictionary<Graphic, GpsPoint> _pointGraphicToGpsPointMap;
+        private List<GpsPoint> _points;
         private int _selectionId;
 
         public MapViewModel()
@@ -53,14 +33,12 @@ namespace DynaTestExplorerMaps.ViewModels
 
             GraphicsData graphicsData = _mapService.CreateGraphics(_dataAccessLayer, _selectionId);
             _graphicsOverlays = graphicsData.Overlays;
-            points = graphicsData.Points;
-            _pointGraphicToGpsPointMap = graphicsData.PointGraphicToGpsPointMap;
+            _points = graphicsData.Points;
 
             _bounds = _mapService.CreateBounds();
 
             WeakReferenceMessenger.Default.Register<SelectionChangedMessage>(this, (r, m) =>
             {
-                Debug.WriteLine("MapViewModel: SelectionChangedMessage received");
                 UpdateSelection(m.Value);
             });
         }
@@ -116,7 +94,6 @@ namespace DynaTestExplorerMaps.ViewModels
             {
                 return;
             }
-            Debug.WriteLine("ImageViewModel: SelectionChangedMessage received with new id " + newSelectionId);
             _mapService.UpdateTracker(newSelectionId);
             _selectionId = newSelectionId;
         }
@@ -126,7 +103,7 @@ namespace DynaTestExplorerMaps.ViewModels
             GpsPoint gpsPoint;
             try
             {
-                gpsPoint = points.Single(point => point.Id == id);
+                gpsPoint = _points.Single(point => point.Id == id);
             }
             catch (InvalidOperationException)
             {

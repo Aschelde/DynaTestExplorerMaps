@@ -2,29 +2,16 @@
 using Esri.ArcGISRuntime.Geometry;
 using Esri.ArcGISRuntime.Mapping;
 using Esri.ArcGISRuntime.UI.Controls;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using Esri.ArcGISRuntime.UI;
-using CommunityToolkit.Mvvm.Messaging;
-using DynaTestExplorerMaps.Messages;
 using Esri.ArcGISRuntime.Data;
 using System.Diagnostics;
 using System.ComponentModel;
-using static System.Formats.Asn1.AsnWriter;
-using System.Xml.Linq;
 using DynaTestExplorerMaps.Interfaces;
 
 namespace DynaTestExplorerMaps.Views

@@ -2,7 +2,6 @@ using DynaTestExplorerMaps.ViewModels;
 using DynaTestExplorerMaps.Views;
 using DynaTestExplorerMaps.Interfaces;
 using Esri.ArcGISRuntime;
-using Esri.ArcGISRuntime.Http;
 using Esri.ArcGISRuntime.Security;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -48,7 +47,6 @@ namespace DynaTestExplorerMaps
 
             await AppHost!.StartAsync();
             var startupForm = ServiceProvider.GetRequiredService<MainWindow>();
-            startupForm.DataContext = new MainWindowViewModel();
             startupForm.Show();
 
             base.OnStartup(e);

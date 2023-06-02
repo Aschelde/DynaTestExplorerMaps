@@ -1,16 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
-using DynaTestExplorerMaps.EventHandling;
 using DynaTestExplorerMaps.Interfaces;
 using DynaTestExplorerMaps.Messages;
-using Microsoft.Extensions.DependencyInjection;
-using OxyPlot;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Input;
-using System.Windows.Navigation;
 
 namespace DynaTestExplorerMaps.ViewModels
 {
@@ -25,7 +16,7 @@ namespace DynaTestExplorerMaps.ViewModels
         public OptionsViewModel(IDataAccessLayer dataAccessLayer)
         {
             _dataAccessLayer = dataAccessLayer;
-            getMaxMinMeasurementInterval();
+            GetMaxMinMeasurementInterval();
             _currentMeasurementInterval = 10;
             _currentMeasurementType = "IRI";
         }
@@ -52,7 +43,7 @@ namespace DynaTestExplorerMaps.ViewModels
             WeakReferenceMessenger.Default.Send(new MeasurementTypeChangedMessage(type));
         }
 
-        private void getMaxMinMeasurementInterval ()
+        private void GetMaxMinMeasurementInterval()
         {
             Tuple<int, int> maxMinMeasurementInterval = _dataAccessLayer.GetMaxMinMeasurementInterval();
             _minMeasurementIntervalDistance= maxMinMeasurementInterval.Item1;
